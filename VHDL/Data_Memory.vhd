@@ -16,6 +16,9 @@ entity Data_Memory is
 			EXMEM_M:		in std_logic_vector(1 downto 0);	-- for the first bit, '0' refers to access Data Mem, '1' refers to pass through 
 																-- for the second bit, '0' refers to read data from data memory		
 																					-- '1' refers to write data to data memory
+			High_Reg:		in std_logic_vector(31 downto 0);
+			Low_Reg:		in std_logic_vector(31 downto 0);
+																					
 			Write_data:		in std_logic_vector(31 downto 0);
 			ALU_out	:		in std_logic_vector(31 downto 0);
 			EXMEM_register:	in std_logic_vector(4 downto 0); 
