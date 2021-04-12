@@ -7,13 +7,15 @@ use ieee.std_logic_textio.all;
 entity Fetch is
 
 port(
-	clk:				in std_logic;
-	mux_input:			in std_logic_vector(31 downto 0);
-	mux_Select:			in std_logic;
-	structure_stall:	in std_logic := '0';
-	pc_stall:			in std_logic := '0';
-	pc_update:			out std_logic_vector(31 downto 0);
-	instruction_out		out std_logic_vector(31 downto 0)
+	clk:						in std_logic;
+	branch_target_address:		in std_logic_vector(31 downto 0);
+	jump_target_address:		in std_logic_vector(31 downto 0);	
+	next_pc_branch:				in std_logic;
+	next_pc_jump:				in std_logic;
+--	structure_stall:	in std_logic := '0';
+	pc_stall:					in std_logic := '0';
+	pc_update:					out std_logic_vector(31 downto 0);
+	Fetch_out:					out std_logic_vector(31 downto 0)
 	);
 
 end Fetch;
@@ -23,7 +25,7 @@ architecture fetch_arch of Fetch is
 component Instruction_Memory is
 	generic(
 		ram_size: 		integer := 32768;
-		mem_delay: 		time := 10 ns;
+		mem_delay: 		time := 1 ns;
 		clock_period: 	time := 1 ns
 		);
 	port(
@@ -49,7 +51,9 @@ end component;
 	signal four:			integer := 4;
 
 	-- program counter initialized at zero
+	signal pc_next:			std_logic_vector(31 downto 0);		
 	signal pc_value:		std_logic_vector(31 downto 0) := "00000000000000000000000000000000";
+	signal instruction_out	std_logic_vector(31 downto 0);
 
 	-- signal for stalls?
 
@@ -57,15 +61,26 @@ end component;
 begin
 
 	-- mux connection:
-	-- if branch taken, EX/MEM send 1 and branch target address to mux, 
-	-- else, by default increment PC by 4
+	-- 
+	fetch_mux : process(next_pc_jump, next_pc_branch)
+	begin
+		if (next_pc_jump'event and rising_edge(next_pc_jump)) then
+			pc_next <= jump_target_address;
+		elsif (next_pc_branch'event and rising_edge(next_pc_branch)) then
+			pc_next <= branch_target_address;
+		else
+			pc_next <= adder_output;
+		end if ;
 
-	pc_update <= mux_input when (mux_Select = '1') else adder_output;
+	end process ; -- fetch_mux
+
+	--pc_next <= branch_target_address when (mux_Select = '1') else adder_output;
 
 	-- adder connection:
 
 	adder_result <= four + to_integer(unsigned(pc_value));
 	adder_output <= std_logic_vector(to_unsigned(adder_result, adder_output'length));
+	pc_update <= adder_output;
 
 	-- instruction memory and pc connection:
 	-- first conver pc_update to integer for memory read
@@ -76,7 +91,15 @@ begin
 	PC: process(clk)
 	begin
 		if(clk'event and clk = '1') then
-			pc_value <= pc_update;
+			if(pc_stall = '0') then
+				Fetch_out <= instruction_out;
+				pc_value <= pc_next;
+			else
+				-- stall by inserting add $r0, $r0, $r0 
+				-- 000000;00000;00000;00000;00000;100000;
+				Fetch_out <= "00000000000000000000000000100000";
+			end if;
+			
 		end if;
 	end process;
 
@@ -87,9 +110,10 @@ begin
 			address => address;
 			memwrite => memwrite;
 			memread => memread;
+
 			readdata => instruction_out;
 			waitrequest => waitrequest
 			);
 	
 
-end architecture ; -- fetch_arch
+end fetch_arch ; -- fetch_arch

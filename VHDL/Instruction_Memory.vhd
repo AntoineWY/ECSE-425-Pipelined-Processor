@@ -7,7 +7,7 @@ use ieee.std_logic_textio.all;
 entity Instruction_Memory is 
 	generic(
 		ram_size: 		integer := 32768;
-		mem_delay: 		time := 10 ns;
+		mem_delay: 		time := 1 ns;
 		clock_period: 	time := 1 ns
 		);
 	port(
@@ -70,7 +70,7 @@ begin
 			end if;
 		end process;
 
-		waitreq_w_proc: process(memread)
+		waitreq_r_proc: process(memread)
 		begin
 			if(memread'event and memread = '1') then
 				read_waitreq_reg <= '0' after mem_delay, '1' after mem_delay + clock_period;
@@ -78,4 +78,4 @@ begin
 		end process;
 
 		waitrequest <= write_waitreq_reg and read_waitreq_reg;
-end architecture ; -- rtl
+end rtl ; -- rtl
