@@ -35,10 +35,6 @@ architecture implementation of Data_Memory is
 	signal write_waitreq_reg:	std_logic := '1';
 	signal read_waitreq_reg:	std_logic := '1';
 
-begin
-	
-	data_mem_process: process (clock)
-	
 	file write_data_memory: 	text;
 	file read_data_memory:		text;
 	variable row:				line;
@@ -47,7 +43,11 @@ begin
 	variable address_counter:	integer := 0;
 	variable memwrite: 			STD_LOGIC;
 	variable memread: 			STD_LOGIC;
+
+begin
 	
+	data_mem_process: process (clock)
+		
 	begin
 	-- Initialize the file "memory.txt"
 	if(now < 1 ps)then
