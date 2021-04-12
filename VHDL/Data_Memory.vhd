@@ -11,20 +11,24 @@ entity Data_Memory is
 			clock_period:	time := 1 ns;			
 			);
 	port(	
-			clock:			in std_logic;
-			EXMEM_WB:		in std_logic;	-- Directly pass to MEMWB_WB
-			EXMEM_M:		in std_logic_vector(1 downto 0);	-- for the first bit, '0' refers to access Data Mem, '1' refers to pass through 
+			clock:				in std_logic;
+			EXMEM_WB:			in std_logic;	-- Directly pass to MEMWB_WB
+			EXMEM_M:			in std_logic;	-- for the first bit, '0' refers to access Data Mem, '1' refers to pass through 
 																-- for the second bit, '0' refers to read data from data memory		
 																					-- '1' refers to write data to data memory
-																					
-			Write_data:		in std_logic_vector(31 downto 0);
-			ALU_out	:		in std_logic_vector(31 downto 0);
-			EXMEM_register:	in std_logic_vector(4 downto 0); 
+			opcode:				in std_logic_vector(4 downto 0); --
 			
-			MEMWB_WB:		out std_logic;	-- writeback signal output
-			Data_Mem_out:	out std_logic_vector(31 downto 0); -- output from data memory
-			Address_to_WB:	out std_logic_vector(31 downto 0); -- output from ALU output	
-			MEMWB_register:	out std_logic_vector(4 downto 0); -- output 
+			Write_data:			in std_logic_vector(31 downto 0);
+			ALU_out:			in std_logic_vector(31 downto 0);
+			EXMEM_register:		in std_logic_vector(4 downto 0); 
+			
+			MEMWB_M:			out std_logic;
+			MEMWB_WB:			out std_logic;	-- writeback signal output
+			Data_Mem_out:		out std_logic_vector(31 downto 0); -- output from data memory
+			Address_to_WB:		out std_logic_vector(31 downto 0); -- output from ALU output	
+			MEMWB_register:		out std_logic_vector(4 downto 0); -- output 
+			Reg_Mem_to_forwarding:	out std_logic_vector(4 downto 0);
+			WB_Mem_to_forwarding:	out std_logic;
 		);	
 end Data_Memory;
 
@@ -58,21 +62,24 @@ begin
 		end loop;
 	end if;
 	
-	if(EXMEM_M(0) = '1')then
+	if(EXMEM_M = '1' AND opcode = "10101")then
 		memwrite <= '1';
 		memread <= '0';
-	else
+	elsif(EXMEM_M = '1' AND opcode = "10100")then
 		memwrite <= '0';
 		memread <= '1';
 	end if;
 	
+	Reg_Mem_to_forwarding <= EXMEM_register;
+	WB_Mem_to_forwarding <= EXMEM_WB;
 
 	if(clock'event AND clock = '1') then	
 		MEMEWB_WB <= EXMEM_WB;	-- Directly pass the writeback signal to next pipelin stage
+		MEMWB_M <= EXMEM_M;	-- input of multiplexer(WB)
 		MEMWB_register <= EXMEM_register; -- Directly pass the register to the next stage;
 		address := to_integer(unsigned(ALU_out));
-	
-		if(EXMEM_M(1) = '1') then
+		
+		if(EXMEM_M = '0') then
 		Address_to_WB <= ALU_out;	-- no need to access data memory
 		
 		else 
@@ -85,7 +92,7 @@ begin
 				readline(read_data_memory, row);
 				address_counter := address_counter + 4;
 			end loop;			
-			if(EXMEM_M(0) = '0' AND memread = '1') then	
+			if(opcode = "10100" AND memread = '1') then	
 			-- load data from the given address and pass it to the signal Data_Mem_out
 
 				read(row, row_data);
@@ -93,7 +100,7 @@ begin
 				address_counter := 0;
 			
 			else
-				if(memwrite = '1')then
+				if(opcode = "10101" AND memwrite = '1')then
 					-- store data to the given address with the given value
 					write(row, Write_data);
 					writeline(write_data_memory, row);
