@@ -13,7 +13,7 @@ port(
 	next_pc_branch:				in std_logic;
 	next_pc_jump:				in std_logic;
 --	structure_stall:	in std_logic := '0';
-	pc_stall:					in std_logic := '0';
+--	pc_stall:					in std_logic := '0';
 	pc_update:					out std_logic_vector(31 downto 0);
 	Fetch_out:					out std_logic_vector(31 downto 0)
 	);
@@ -41,10 +41,11 @@ end component;
 
 	signal writedata: 		std_logic_vector(31 downto 0);
 	signal address: 		integer range 0 to 32768-1;
-	signal memwrite: 		std_logic = '0';
-	signal memread:			std_logic = '1';
+	signal memwrite: 		std_logic := '0';
+	signal memread:			std_logic := '1';
 	signal readdata:		std_logic_vector(31 downto 0);
 	signal waitrequest:		std_logic;	-- how do we do with this?
+--	signal pc_stall:		std_logic;
 
 	signal adder_output:	std_logic_vector(31 downto 0);
 	signal adder_result:	integer;
@@ -53,7 +54,7 @@ end component;
 	-- program counter initialized at zero
 	signal pc_next:			std_logic_vector(31 downto 0);		
 	signal pc_value:		std_logic_vector(31 downto 0) := "00000000000000000000000000000000";
-	signal instruction_out	std_logic_vector(31 downto 0);
+	signal instruction_out:	std_logic_vector(31 downto 0);
 
 	-- signal for stalls?
 
@@ -78,26 +79,56 @@ begin
 
 	-- adder connection:
 
-	adder_result <= four + to_integer(unsigned(pc_value));
-	adder_output <= std_logic_vector(to_unsigned(adder_result, adder_output'length));
-	pc_update <= adder_output;
+	--adder_result <= four + to_integer(unsigned(pc_value));
+	--adder_output <= std_logic_vector(to_unsigned(adder_result, adder_output'length));
+	--pc_update <= adder_output;
 
 	-- instruction memory and pc connection:
 	-- first conver pc_update to integer for memory read
 
-	address <= to_integer(unsigned(pc_value));
+	
+
+	-- if need to jump or branch, then set stall flag and stall for 3 cycles
+
 
 	-- once the clock rising edge, then pc is updated
 	PC: process(clk)
+	variable stall_count:	integer;
 	begin
 		if(clk'event and clk = '1') then
-			if(pc_stall = '0') then
-				Fetch_out <= instruction_out;
+			if((next_pc_branch or next_pc_jump) = '0') then
+
+
+
+
+				address <= to_integer(unsigned(pc_value));
+				Fetch_out <= instruction_out;				
+				--pc_value <= pc_next;
+
+				adder_result <= four + to_integer(unsigned(pc_value));
+				adder_output <= std_logic_vector(to_unsigned(adder_result, adder_output'length));
+				pc_next<= adder_output;
+
+
 				pc_value <= pc_next;
+
+				pc_update <=pc_value;
+				
+				
 			else
-				-- stall by inserting add $r0, $r0, $r0 
+				-- stall 3 cycles by inserting add $r0, $r0, $r0 
 				-- 000000;00000;00000;00000;00000;100000;
+				stall_count := 0;
 				Fetch_out <= "00000000000000000000000000100000";
+				stall_loop : while (stall_count < 2) loop
+					if (rising_edge(clk)) then
+						Fetch_out <= "00000000000000000000000000100000";
+						stall_count := stall_count + 1;
+					end if ;
+
+				end loop ; -- stall_loop
+
+
 			end if;
 			
 		end if;
@@ -105,13 +136,13 @@ begin
 
 	IM: Instruction_Memory
 		port map(
-			clock => clk;
-			writedata => writedata;
-			address => address;
-			memwrite => memwrite;
-			memread => memread;
+			clock => clk,
+			writedata => writedata,
+			address => address,
+			memwrite => memwrite,
+			memread => memread,
 
-			readdata => instruction_out;
+			readdata => instruction_out,
 			waitrequest => waitrequest
 			);
 	

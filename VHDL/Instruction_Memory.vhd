@@ -49,16 +49,19 @@ begin
 				row_counter := row_counter + 1;
 			end loop;
 		end if;
+		
 		file_close(program_read);
 
 		-- creating the actual synthesizable SRAM block, unchanged from memory
+		-- at falling edge, read pc_value into
 		if(clock'event and clock = '1') then
+		
 			if(memwrite = '1') then
 				ram_block(address) <= writedata;
 			end if;
-			read_address_reg <= address;
+			read_address_reg <= address/4;
 		end if;
-
+end process;
 		readdata <= ram_block(read_address_reg);
 
 		--The waitrequest signal is used to vary response time in simulation
