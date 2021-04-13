@@ -39,27 +39,29 @@ architecture implementation of Data_Memory is
 	signal write_waitreq_reg:	std_logic := '1';
 	signal read_waitreq_reg:	std_logic := '1';
 
-	file write_data_memory: 	text;
+begin
+	data_mem_process: process (clock)
+	
 	file read_data_memory:		text;
-	variable row:				line;
+	file write_data_memory: 	text;
+	variable row_read:			line;
+	variable row_write:			line;
 	variable row_data:			std_logic_vector(31 downto 0);
 	variable address:			integer range 0 to ram_size - 1;
 	variable address_counter:	integer := 0;
 	variable memwrite: 			STD_LOGIC;
 	variable memread: 			STD_LOGIC;
-
-begin
 	
-	data_mem_process: process (clock)
-		
 	begin
 	-- Initialize the file "memory.txt"
 	if(now < 1 ps)then
+		file_open(write_data_memory, "memory.txt", write_mode);
 		for i in 0 to ram_size - 1 loop
 			ram_block(i) <= std_logic_vector(to_unsigned(0, 32));
-			write(row, ram_block(i));
-			writeline(write_data_memory, row);
+			write(row_write, ram_block(i));
+			writeline(write_data_memory, row_write);
 		end loop;
+		file_close(write_data_memory);
 	end if;
 	
 	if(EXMEM_M = '1' AND opcode = "10101")then
@@ -89,24 +91,25 @@ begin
 			
 			--read until the desired line;
 			while(address_counter < address)
-				readline(read_data_memory, row);
+				readline(read_data_memory, row_read);
+				readline(write_data_memory, row_write);
 				address_counter := address_counter + 4;
 			end loop;			
 			if(opcode = "10100" AND memread = '1') then	
-			-- load data from the given address and pass it to the signal Data_Mem_out
-
-				read(row, row_data);
+				-- load data from the given address and pass it to the signal Data_Mem_out
+				read(row_read, row_data);
 				Data_Mem_out <= row_data;
 				address_counter := 0;
-			
-			else
-				if(opcode = "10101" AND memwrite = '1')then
-					-- store data to the given address with the given value
-					write(row, Write_data);
-					writeline(write_data_memory, row);
-					Data_Mem_out <= Write_data;
-					address_counter := 0;
-				end if;
+				file_close(read_data_memory);
+				file_close(write_data_memory);
+			elsif(opcode = "10101" AND memwrite = '1')then
+				-- store data to the given address with the given value
+				write(row_write, Write_data);
+				writeline(write_data_memory, row_write);
+				Data_Mem_out <= Write_data;
+				address_counter := 0;
+				file_close(read_data_memory);
+				file_close(write_data_memory);
 			end if;
 		end if;
 	end if;
