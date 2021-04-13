@@ -2,3 +2,6 @@
 /bin/
 .DS_Store
 /.gradle/
+.wlf
+.bak
+/VHDL/work/

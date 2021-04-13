@@ -109,7 +109,6 @@ begin
 				adder_output <= std_logic_vector(to_unsigned(adder_result, adder_output'length));
 				pc_next<= adder_output;
 
-
 				pc_value <= pc_next;
 
 				pc_update <=pc_value;
