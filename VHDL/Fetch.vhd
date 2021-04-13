@@ -49,6 +49,8 @@ end component;
 
 	signal adder_output:	std_logic_vector(31 downto 0);
 	signal adder_result:	integer;
+
+
 	signal four:			integer := 4;
 
 	-- program counter initialized at zero
@@ -61,8 +63,8 @@ end component;
 
 begin
 
-	-- mux connection:
-	-- 
+	--mux connection:
+	
 	fetch_mux : process(next_pc_jump, next_pc_branch)
 	begin
 		if (next_pc_jump'event and rising_edge(next_pc_jump)) then
@@ -79,6 +81,7 @@ begin
 
 	-- adder connection:
 
+
 	--adder_result <= four + to_integer(unsigned(pc_value));
 	--adder_output <= std_logic_vector(to_unsigned(adder_result, adder_output'length));
 	--pc_update <= adder_output;
@@ -90,7 +93,6 @@ begin
 
 	-- if need to jump or branch, then set stall flag and stall for 3 cycles
 
-
 	-- once the clock rising edge, then pc is updated
 	PC: process(clk)
 	variable stall_count:	integer;
@@ -99,20 +101,16 @@ begin
 			if((next_pc_branch or next_pc_jump) = '0') then
 
 
-
-
 				address <= to_integer(unsigned(pc_value));
-				Fetch_out <= instruction_out;				
-				--pc_value <= pc_next;
-
-				adder_result <= four + to_integer(unsigned(pc_value));
-				adder_output <= std_logic_vector(to_unsigned(adder_result, adder_output'length));
-				pc_next<= adder_output;
-
-				pc_value <= pc_next;
-
-				pc_update <=pc_value;
+				Fetch_out <= instruction_out;		
 				
+				pc_value <= std_logic_vector(unsigned(pc_value) + 4);
+
+				pc_next<= pc_value;
+
+
+				pc_update <= pc_value;
+	
 				
 			else
 				-- stall 3 cycles by inserting add $r0, $r0, $r0 

@@ -4,12 +4,9 @@ vlib work
 ;# Compile components if any
 vcom Instruction_Memory.vhd
 vcom Instruction_Memory_tb.vhd
-vcom Fetch.vhd
-vcom Fetch_tb.vhd
-
 
 ;# Start simulation
-vsim Fetch_tb
+vsim Instruction_Memory_tb
 
 ;# Generate a clock with 1ns period
 force -deposit clk 0 0 ns, 1 0.5 ns -repeat 1 ns

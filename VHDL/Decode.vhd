@@ -1,6 +1,9 @@
 library ieee;
-use ieee.std_logic_1164;
+use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use std.textio.all;
+use ieee.std_logic_textio.all;
+
 
 entity Decode is
 
@@ -25,7 +28,7 @@ entity Decode is
 
     -- operation flag
     --JUMP:     out std_logic;
-    JUMP_ADDRESS: out std_logic_vector(31 downto 0);  -- the sign extend address
+    --JUMP_ADDRESS: out std_logic_vector(31 downto 0);  -- the sign extend address
     IDEX_WB:   out std_logic;
     IDEX_M:    out std_logic;
     IDEX_EX:   out std_logic;
@@ -47,11 +50,17 @@ end Decode;
 architecture implementation of Decode is
 
   type register_structure is array (31 downto 0) of std_logic_vector (31 downto 0);
-  signal registers: register_structure;
-  registers(0) <= "00000000000000000000000000000000";
+  signal registers: register_structure :=(0 =>"00000000000000000000000000000000",
+  1 =>"00000000000000000000000000000001",
+  2 =>"00000000000000000000000000000010",
+  3 =>"00000000000000000000000000000100",
+  4 =>"00000000000000000000000000001000",
+  5 =>"00000000000000000000000000010000",
+  others => (others =>'0'));
+
   signal HI_reg, LO_reg : std_logic_vector(31 downto 0);
-  signal four : unsigned(31 downto 0);
-  four <= "00000000000000000000000000000100"
+  signal four : unsigned(31 downto 0) := "00000000000000000000000000000100";
+  --four <= "00000000000000000000000000000100"
   signal opcode : std_logic_vector(5 downto 0);
   signal Rs, Rt, Rd : std_logic_vector(4 downto 0);
   signal shamt  : std_logic_vector(4 downto 0);
@@ -59,9 +68,28 @@ architecture implementation of Decode is
   signal immediate  : std_logic_vector(15 downto 0);
   signal address  : std_logic_vector(25 downto 0);
 
+
+
+
 begin
 
+  -- registers(0) <= "00000000000000000000000000000000";
+  -- registers(1) <= "00000000000000000000000000000001";
+  -- registers(2) <= "00000000000000000000000000000010";
+  -- registers(3) <= "00000000000000000000000000000100";
+  -- registers(4) <= "00000000000000000000000000001000";
+  -- registers(5) <= "00000000000000000000000000010000";
+  -- registers(6) <= "00000000000000000000000000100000";
+  -- registers(7) <= "00000000000000000000000001000000";
+  -- registers(8) <= "00000000000000000000000010000000";
+  -- registers(9) <= "00000000000000000000000100000000";
+  -- registers(10) <= "00000000000000000000010000000000";
+
   decode_operation: process (clk)
+
+  variable rs_index : integer;
+  variable rt_index : integer;
+  variable rd_index : integer;
   begin
     if (clk'event and rising_edge(clk)) then
       JUMP <= '0';
@@ -83,6 +111,9 @@ begin
           Rd <= instruction(15 downto 11);
           IDEXRs_forwarding <= Rs;
           IDEXRt_forwarding <= Rt;
+
+         -- rs_index := to_integer(unsigned(Rs));
+          --rt_index := to_integer(unsigned(Rt));
           r_data_1 <= registers(to_integer(unsigned(Rs)));
           r_data_2 <= registers(to_integer(unsigned(Rt)));
           IDEX_WB_register <= Rd;
@@ -139,6 +170,9 @@ begin
               --JUMP_ADDRESS <= r_data_1;
               IDEX_WB <= '0';
               IDEX_EX <= '0';
+
+             when  others =>
+
           end case;
 
         -- two jumps -----------------------------------------------------------
@@ -171,7 +205,7 @@ begin
           IDEX_WB_register <= Rt;
           r_data_1 <= registers(to_integer(unsigned(Rs)));
           IDEXRs_forwarding <= Rs;
-          IDEXRt_forwarding <= "00000"
+          IDEXRt_forwarding <= "00000";
           --IDEXRt_forwarding <= Rt;
           case opcode is
             when "001000" =>
@@ -188,7 +222,7 @@ begin
               else
                 r_data_2 <= "0000000000000000"&immediate;
               end if;
-            when "001000" =>
+            when "001100" =>
               ALU_op <= "01011"; -- andi 11
               r_data_2 <= "0000000000000000"&immediate;
             when "001101" =>
@@ -242,7 +276,11 @@ begin
               else
                 SIGN_EXTEND <= "0000000000000000"&immediate;
               end if;
+
+            when others =>
+
           end case;
+
 
       end case;
 

@@ -49,6 +49,7 @@ ARCHITECTURE behaviour OF Fetch_tb IS
     signal dummy_vector: std_logic_vector(31 downto 0);
     signal dummy_logic: std_logic := '0';
     signal pc_update:	 std_logic_vector(31 downto 0);
+    signal addr: integer range 0 to 32768-1;
 
 
 BEGIN
@@ -62,7 +63,6 @@ BEGIN
         next_pc_jump=> dummy_logic,
         pc_update => pc_update,
         Fetch_out => readdata
-
     );
 
     clk_process : process
