@@ -52,12 +52,12 @@ architecture implementation of Decode is
   signal HI_reg, LO_reg : std_logic_vector(31 downto 0);
   signal four : unsigned(31 downto 0);
   four <= "00000000000000000000000000000100"
-  variable opcode : std_logic_vector(5 downto 0);
-  variable Rs, Rt, Rd : std_logic_vector(4 downto 0);
-  variable shamt  : std_logic_vector(4 downto 0);
-  variable funct  : std_logic_vector(5 downto 0);
-  variable immediate  : std_logic_vector(15 downto 0);
-  variable address  : std_logic_vector(25 downto 0);
+  signal opcode : std_logic_vector(5 downto 0);
+  signal Rs, Rt, Rd : std_logic_vector(4 downto 0);
+  signal shamt  : std_logic_vector(4 downto 0);
+  signal funct  : std_logic_vector(5 downto 0);
+  signal immediate  : std_logic_vector(15 downto 0);
+  signal address  : std_logic_vector(25 downto 0);
 
 begin
 
