@@ -7,7 +7,7 @@ use ieee.std_logic_textio.all;
 entity Instruction_Memory is 
 	generic(
 		ram_size: 		integer := 32768;
-		mem_delay: 		time := 1 ns;
+		mem_delay: 		time := 0 ns;
 		clock_period: 	time := 1 ns
 		);
 	port(
@@ -49,36 +49,9 @@ begin
 				row_counter := row_counter + 1;
 			end loop;
 		end if;
-		
 		file_close(program_read);
-
-		-- creating the actual synthesizable SRAM block, unchanged from memory
-		-- at falling edge, read pc_value into
-		if(clock'event and clock = '1') then
-		
-			if(memwrite = '1') then
-				ram_block(address) <= writedata;
-			end if;
-			read_address_reg <= address/4;
-		end if;
 end process;
+		read_address_reg <= address/4;
 		readdata <= ram_block(read_address_reg);
 
-		--The waitrequest signal is used to vary response time in simulation
-		--Read and write should never happen at the same time.
-		waitreq_w_proc: process(memwrite)
-		begin
-			if(memwrite'event and memwrite = '1') then
-				write_waitreq_reg <= '0' after mem_delay, '1' after mem_delay + clock_period;
-			end if;
-		end process;
-
-		waitreq_r_proc: process(memread)
-		begin
-			if(memread'event and memread = '1') then
-				read_waitreq_reg <= '0' after mem_delay, '1' after mem_delay + clock_period;
-			end if;
-		end process;
-
-		waitrequest <= write_waitreq_reg and read_waitreq_reg;
 end rtl ; -- rtl

@@ -10,7 +10,7 @@ ARCHITECTURE behaviour OF Instruction_Memory_tb IS
 --Declare the component that you are testing:
     COMPONENT Instruction_Memory IS
         GENERIC(
-            ram_size : INTEGER := 1024;
+            ram_size : INTEGER := 32768;
             mem_delay : time := 1 ns;
             clock_period : time := 1 ns
         );
@@ -29,7 +29,7 @@ ARCHITECTURE behaviour OF Instruction_Memory_tb IS
     signal clk : std_logic := '0';
     constant clk_period : time := 1 ns;
     signal writedata: std_logic_vector(31 downto 0);
-    signal address: INTEGER RANGE 0 TO 1024-1;
+    signal address: INTEGER RANGE 0 TO 32768-1;
     signal memwrite: STD_LOGIC := '0';
     signal memread: STD_LOGIC := '1';
     signal readdata: STD_LOGIC_VECTOR (31 DOWNTO 0);
@@ -39,7 +39,7 @@ BEGIN
 
     --dut => Device Under Test
     dut: Instruction_Memory GENERIC MAP(
-            ram_size => 1024
+            ram_size => 32768
                 )
                 PORT MAP(
                  clk ,
