@@ -16,18 +16,18 @@ ARCHITECTURE behaviour OF Decode_tb IS
                 -- from WB
                 write_data: in std_logic_vector(31 downto 0);
                 write_register: in std_logic_vector(4 downto 0);
-            
+
                 HI_data, LO_data : in std_logic_vector(31 downto 0);
                 -- relay
                 pc_update: inout std_logic_vector(31 downto 0); --pc+4
-            
+
                 -- output data to execution
                 r_data_1: out std_logic_vector(31 downto 0);
                 r_data_2: out std_logic_vector(31 downto 0);
-            
+
                 -- opcode for execution
                 ALU_op: out std_logic_vector(4 downto 0);
-            
+
                 -- operation flag
                 --JUMP:     out std_logic;
                 --JUMP_ADDRESS: out std_logic_vector(31 downto 0);  -- the sign extend address
@@ -35,7 +35,7 @@ ARCHITECTURE behaviour OF Decode_tb IS
                 IDEX_M:    out std_logic;
                 IDEX_EX:   out std_logic;
                 SIGN_EXTEND: out std_logic_vector(31 downto 0);
-            
+
                 -- forwarding
                 IDEXRs_forwarding: out std_logic_vector(4 downto 0);
                 --IFIDRt: out std_logic_vector(4 downto 0);
@@ -43,19 +43,21 @@ ARCHITECTURE behaviour OF Decode_tb IS
                 --IFIDRd: out std_logic_vector(4 downto 0);
                 IDEX_WB_register: out std_logic_vector(4 downto 0);
                 -- stall
-                BRANCH: out std_logic; -- if there is a stall, always stall for 3 cc
-                JUMP:     out std_logic);
-            
+                stall: out std_logic
+
+
+                );
+
     END COMPONENT;
 
     signal clk:  std_logic;
-    signal instruction:  std_logic_vector(31 downto 0);  
+    signal instruction:  std_logic_vector(31 downto 0);
     signal write_data: std_logic_vector(31 downto 0);
     signal write_register: std_logic_vector(4 downto 0);
 
     signal HI_data, LO_data : std_logic_vector(31 downto 0);
-    
-    signal pc_update: std_logic_vector(31 downto 0); 
+
+    signal pc_update: std_logic_vector(31 downto 0);
 
     signal r_data_1: std_logic_vector(31 downto 0);
     signal r_data_2: std_logic_vector(31 downto 0);
@@ -69,10 +71,10 @@ ARCHITECTURE behaviour OF Decode_tb IS
 
     signal IDEXRs_forwarding: std_logic_vector(4 downto 0);
     signal IDEXRt_forwarding: std_logic_vector(4 downto 0);
-    
+
     signal IDEX_WB_register: std_logic_vector(4 downto 0);
-    signal BRANCH:  std_logic; 
-    signal JUMP:    std_logic;
+    signal stall:  std_logic;
+
 
     constant clk_period : time := 10 ns;
 
@@ -100,21 +102,21 @@ BEGIN
         IDEXRs_forwarding => IDEXRs_forwarding,
         IDEXRt_forwarding => IDEXRt_forwarding,
         IDEX_WB_register=> IDEX_WB_register,
-        BRANCH => BRANCH,
-        JUMP => JUMP
+        stall => stall
+
     );
 
     clk_process : process
     BEGIN
-        clk <= '0';
-        wait for clk_period/2;
         clk <= '1';
+        wait for clk_period/2;
+        clk <= '0';
         wait for clk_period/2;
     end process;
 
     test_process : process
     BEGIN
-     
+
         -- case 1 : add
         --add rs =1, rt=2, rd=3
         instruction <="00000000001000100001100000100000";
@@ -131,5 +133,5 @@ BEGIN
 
     END PROCESS;
 
- 
+
 END;
