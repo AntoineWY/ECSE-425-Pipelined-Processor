@@ -18,31 +18,38 @@ end ALU;
 architecture alu_behavior of ALU is
 
 	signal hi_s, lo_s:		std_logic_vector(31 downto 0);
-	signal bit_to_shift:	integer;
+	--signal bit_to_shift:	integer;
+	signal long_bit:			std_logic_vector(63 downto 0);
 
 begin
 
 hi <= hi_s;
-lo <= lo_s
+lo <= lo_s;
 
 process(ALU_in1,ALU_in2,ALU_op,clk)
+variable bit_to_shift: integer;
 begin
 case(ALU_op) is
 
 	when "00000" => -- add
 		ALU_out <= std_logic_vector(to_signed(to_integer(signed(ALU_in1))+to_integer(signed(ALU_in2)), ALU_out'length));
 	when "00001" => -- sub
-		ALU_out <= std_logic_vector(to_signed(to_integer(signed(ALU_in1))+to_integer(signed(ALU_in2)), ALU_out'length));
+		ALU_out <= std_logic_vector(to_signed(to_integer(signed(ALU_in1))-to_integer(signed(ALU_in2)), ALU_out'length));
 	when "00010" => -- addi
 		ALU_out <= std_logic_vector(to_signed(to_integer(signed(ALU_in1))+to_integer(signed(ALU_in2)), ALU_out'length));
 	when "00011" => -- mult
-		ALU_out <= std_logic_vector(to_signed(to_integer(signed(ALU_in1))*to_integer(signed(ALU_in2)), 64));
-		hi <= ALU_out(63 downto 32);
-		lo <= ALU_out(31 downto 0);
+		ALU_out <= std_logic_vector(to_signed(to_integer(signed(ALU_in1))*to_integer(signed(ALU_in2)), ALU_out'length));
+		long_bit <= std_logic_vector(to_signed(to_integer(signed(ALU_in1))*to_integer(signed(ALU_in2)), 64));
+		hi <= long_bit(63 downto 32);
+		hi_s <= long_bit(63 downto 32);
+		lo <= long_bit(31 downto 0);
+		lo_s <= long_bit(31 downto 0);
 	when "00100" => -- div
 		ALU_out <= std_logic_vector(to_signed(to_integer(signed(ALU_in1))/to_integer(signed(ALU_in2)), ALU_out'length));
 		lo <= std_logic_vector(to_signed(to_integer(signed(ALU_in1))/to_integer(signed(ALU_in2)), lo'length));
+		lo_s <= std_logic_vector(to_signed(to_integer(signed(ALU_in1))/to_integer(signed(ALU_in2)), lo'length));
 		hi <= std_logic_vector(to_signed(to_integer(signed(ALU_in1)) mod to_integer(signed(ALU_in2)), hi'length));
+		hi_s <= std_logic_vector(to_signed(to_integer(signed(ALU_in1)) mod to_integer(signed(ALU_in2)), hi'length));
 	when "00101" => -- slt
 		if(signed(ALU_in1)<signed(ALU_in2))then
 			ALU_out <= x"00000001";
@@ -70,9 +77,9 @@ case(ALU_op) is
 	when "01101" => -- xori
 		ALU_out <= ALU_in1 xor ALU_in2;
 	when "01110" => -- mfhi
-		ALU_out <= hi;
+		ALU_out <= hi_s;
 	when "01111" => -- mflo
-		ALU_out <= lo;
+		ALU_out <= lo_s;
 	when "10000" => -- lui
 		ALU_out <= ALU_in2(15 downto 0) & std_logic_vector(to_unsigned(0,16));
 	when "10001" => -- sll
@@ -96,7 +103,8 @@ case(ALU_op) is
 		ALU_out <= std_logic_vector(to_signed(to_integer(signed(ALU_in1))+to_integer(signed(ALU_in2)), ALU_out'length));		
 	when "10101" => --store
 		ALU_out <= std_logic_vector(to_signed(to_integer(signed(ALU_in1))+to_integer(signed(ALU_in2)), ALU_out'length));
-	
+	when others =>
+		ALU_out <= x"00000000";
 end case ;
 end process;
 

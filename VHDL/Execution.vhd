@@ -19,11 +19,11 @@ port(
 	mux1_select:		in std_logic_vector(1 downto 0);
 	mux2_select:		in std_logic_vector(1 downto 0);
 	-- inputs from other stages by forwarding
-	WB_out:				in std_logic_vector(32 downto 0); -- mux1_in2 & mux2_in3
-	MEM_out:			in std_logic_vector(32 downto 0); -- mux1_in3 & mux2_in2
+	WB_out:				in std_logic_vector(31 downto 0); -- mux1_in2 & mux2_in3
+	MEM_out:			in std_logic_vector(31 downto 0); -- mux1_in3 & mux2_in2
 	-- inputs from ID stage
 	IDEX_WB_register:	in std_logic_vector(4 downto 0);
-	IDEX_Rs_resigter:	inout std_logic_vector(4 downto 0);
+	IDEX_Rs_register:	inout std_logic_vector(4 downto 0);
 	IDEX_Rt_register:	inout std_logic_vector(4 downto 0);
 	-- intput from control blocks
 	IDEX_EX:			in std_logic; -- check if alu is needed
@@ -122,12 +122,12 @@ end process;
 
 alu_block: ALU
 	port map(
-		clk => clk;
-		ALU_in1 => ALU_in1;
-		ALU_in2 => ALU_in2;
-		ALU_op => ALU_op;
-		hi => hi;
-		lo => lo;
+		clk => clk,
+		ALU_in1 => ALU_in1,
+		ALU_in2 => ALU_in2,
+		ALU_op => ALU_op,
+		hi => hi,
+		lo => lo,
 		ALU_out => ALU_out
 		);
 end exe ; -- exe
