@@ -9,7 +9,10 @@ use ieee.std_logic_textio.all;
 entity Pipeline is
 
 port(
-	clk:			in std_logic;
+	clk:				in std_logic;
+	stage1_fetch_out:	out std_logic_vector(31 downto 0);
+	stage2_out_data:	out std_logic_vector(31 downto 0);	
+	logic_out:			out std_logic;
 	pip_ALU_out:		out std_logic_vector(31 downto 0)
 	);
 
@@ -24,7 +27,7 @@ component Fetch is
 		--	jump_target_address:		in std_logic_vector(31 downto 0);	
 		pc_stall:					in std_logic;
 		--	next_pc_jump:				in std_logic;
-		bj_address_ready:				in std_logic;
+		bj_address_ready:			in std_logic;
 		--	structure_stall:	in std_logic := '0';
 		--	pc_stall:					in std_logic := '0';
 		pc_update:					out std_logic_vector(31 downto 0);
@@ -32,6 +35,7 @@ component Fetch is
 		--addr:						out integer RANGE 0 TO 32768-1
 		);
 end component;
+
 
 component Decode is
 
@@ -49,7 +53,7 @@ component Decode is
 
     -- output data to execution
     r_data_1: out std_logic_vector(31 downto 0); --done
-    r_data_2: out std_logic_vector(31 downto 0);  -- done
+    r_data_2: out std_logic_vector(31 downto 0);  -- done 
 
     -- opcode for execution
     ALU_op: out std_logic_vector(4 downto 0); --done
@@ -147,6 +151,7 @@ end component;
 			IDEX_M,
 			IDEX_EX,
 			bj_address_ready,
+			stall_sig,			-- map to pc_stall
 			pc_stall:		std_logic;
 
 	-- Execution signal extension
@@ -169,21 +174,39 @@ end component;
 
 
 begin
+
+--pc_stall <= '0';
+--logic_out <= pc_stall;
+
+
 process(clk)
 begin
+stall_sig <= '0';
+bj_address_ready <= '0';
+--mux1_select <= "00";
+--mux2_select <= "00";
+	
+
 	if(rising_edge(clk)) then
+
 		-- IF/ID
+
+		stage1_fetch_out <= Fetch_out;
+
 		pc_update_to_decode <= pc_update;
 		Fetch_out_to_decode <= Fetch_out;
 
+		stage2_out_data <= r_data_1;
+
 		-- ID/EX
+		ALU_op_to_execution <= ALU_op;
+
 		pc_update_to_execution <= pc_update_to_decode;
 		readdata1_to_execution <= r_data_1;
 		readdata2_to_execution <= r_data_2;
-		extended_to_execution <= SIGN_EXTEND;
-		ALU_op_to_execution <= ALU_op;
+		extended_to_execution <= SIGN_EXTEND;		
 		pip_ALU_out <= ALU_out;
-
+	else
 
 	end if;
 end process;
@@ -193,7 +216,7 @@ end process;
 		port map(
 			clk => clk,
 			bj_target_address => bj_target_address,
-			pc_stall => pc_stall,
+			pc_stall => stall_sig,
 			bj_address_ready => bj_address_ready,
 			pc_update => pc_update,
 			Fetch_out => Fetch_out
@@ -217,7 +240,7 @@ end process;
 			IDEXRs_forwarding => IDEXRs_forwarding,
 			IDEXRt_forwarding => IDEX_Rt_register,
 			IDEX_WB_register => IDEX_WB_register,
-			stall => pc_stall					-- key mapping, to fetch
+			stall => stall_sig					-- key mapping, to fetch
 			);
 	EX: Execution
 		port map(
@@ -241,12 +264,11 @@ end process;
 			EXMEM_WB => IDEX_WB,
 			data_to_mem => data_to_mem,
 			EXMEM_WB_register => EXMEM_WB_register,
-			branch_taken => pc_stall,
+			branch_taken => stall_sig,
 			hi => HI_data,
 			lo => LO_data,
 			ALU_out => ALU_out,
 			adder_out => adder_out
-
 			);
 
 end pipe ; -- pipe

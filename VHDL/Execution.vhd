@@ -83,6 +83,8 @@ begin
 		ALU_in1 <= WB_out;
 	elsif(mux1_select = "10") then
 		ALU_in1 <= MEM_out;
+	else
+		ALU_in1 <= readdata1;
 	end if;
 
 	-- mux2
@@ -102,6 +104,8 @@ begin
 		ALU_in2 <= MEM_out;
 	elsif(mux2_select = "10") then
 		ALU_in2 <= WB_out;
+	else
+		ALU_in2 <= readdata2;
 	end if;
 
 	-- branch check
@@ -116,7 +120,9 @@ begin
 			branch_taken <= '1';
 		else
 			branch_taken <= '0';
-		end if;		
+		end if;	
+	else
+		branch_taken <= '0';	
 	end if;
 end process;
 

@@ -80,8 +80,8 @@ begin
 	begin
 		if(clk'event and rising_edge(clk)) then
 
-			if((pc_stall = '0') and (stall_count = 0) ) then
-
+			if((pc_stall = '0') and (stall_count = 0)) then
+			
 				Fetch_out <= instruction_out;					
 				if(bj_address_ready = '0')then
 					pc_value <= std_logic_vector(unsigned(pc_value) + 4);
@@ -94,6 +94,7 @@ begin
 				if(stall_count = 0)then
 					stall_count := 3;
 				end if;
+				--Fetch_out <= instruction_out;
 				Fetch_out <= "00000000000000000000000000100000";
 				stall_count := stall_count - 1;
 			end if;			

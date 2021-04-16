@@ -81,6 +81,10 @@ begin
 
   immediate <= instruction(15 downto 0);
 
+  stall <= '1'
+          when (opcode = "000100" or opcode = "000101" or opcode = "000010" or funct = "001000") else
+            '0';
+
   r_data_1 <= registers(to_integer(unsigned(Rs)))
               when (opcode = "000000" and funct = "100000") else
               registers(to_integer(unsigned(Rs)))
