@@ -8,16 +8,11 @@ entity Fetch is
 
 port(
 	clk:						in std_logic;
-	bj_target_address:			in std_logic_vector(31 downto 0);
---	jump_target_address:		in std_logic_vector(31 downto 0);	
+	bj_target_address:			in std_logic_vector(31 downto 0);	
 	pc_stall:					in std_logic;
---	next_pc_jump:				in std_logic;
-	bj_address_ready:				in std_logic;
---	structure_stall:	in std_logic := '0';
---	pc_stall:					in std_logic := '0';
+	branch_taken:				in std_logic;
 	pc_update:					out std_logic_vector(31 downto 0);
 	Fetch_out:					out std_logic_vector(31 downto 0)
-	--addr:						out integer RANGE 0 TO 32768-1
 	);
 
 end Fetch;
@@ -61,21 +56,11 @@ end component;
 	signal instruction_out:	std_logic_vector(31 downto 0);
 
 begin
-	--mux connection:
-	
-	--fetch_mux : process(bj_adress_ready)
-	--begin
-		--if (bj_adress_ready'event and rising_edge(bj_adress_ready)) then
-		--	pc_next <= bj_target_address;
-		--end if ;
 
-	--end process ; -- fetch_mux
-	-- once the clock rising edge, then pc is updated
+	pc_update <= pc_value; 
+	address <= to_integer(unsigned(pc_value)) when (branch_taken = '0') else to_integer(unsigned(bj_target_address));
 
-	pc_update <= pc_value; --when(bj_adress_ready = 0) else std_logic_vector(unsigned(bj_target_address) + 4);
-	address <= to_integer(unsigned(pc_value)) when (bj_address_ready = '0') else to_integer(unsigned(bj_target_address));
-
-	PC: process(clk,bj_address_ready)
+	PC: process(clk,branch_taken)
 	variable stall_count:	integer:= 0;
 	begin
 		if(clk'event and rising_edge(clk)) then
@@ -83,7 +68,7 @@ begin
 			if((pc_stall = '0') and (stall_count = 0)) then
 			
 				Fetch_out <= instruction_out;					
-				if(bj_address_ready = '0')then
+				if(branch_taken = '0')then
 					pc_value <= std_logic_vector(unsigned(pc_value) + 4);
 				else
 					pc_value <= std_logic_vector(unsigned(bj_target_address)+4);
