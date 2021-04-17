@@ -8,7 +8,7 @@ entity Data_Memory is
 	generic(
 			ram_size:		integer := 8192; -- There're 8192 lines in the data memory
 			mem_delay:		time := 1 ns;
-			clock_period:	time := 1 ns;			
+			clock_period:	time := 1 ns			
 			);
 	port(	
 			clock:				in std_logic;
@@ -28,109 +28,66 @@ entity Data_Memory is
 			Address_to_WB:		out std_logic_vector(31 downto 0); -- output from ALU output	
 			MEMWB_register:		out std_logic_vector(4 downto 0); -- output 
 			Reg_Mem_to_forwarding:	out std_logic_vector(4 downto 0);
-			WB_Mem_to_forwarding:	out std_logic;
+			WB_Mem_to_forwarding:	out std_logic
 		);	
 end Data_Memory;
 
 architecture implementation of Data_Memory is
 	
-	type mem is array(ram_size - 1 downto 0) of std_logic_vector(31 downto 0);
-	signal ram_block:			mem;
-	signal write_waitreq_reg:	std_logic := '1';
-	signal read_waitreq_reg:	std_logic := '1';
+	TYPE MEM IS ARRAY(ram_size-1 downto 0) OF STD_LOGIC_VECTOR(31 DOWNTO 0);
+	SIGNAL ram_block: MEM;
 
 begin
-	data_mem_process: process (clock)
-	
-	file read_data_memory:		text;
-	file write_data_memory: 	text;
-	variable row_read:			line;
-	variable row_write:			line;
-	variable row_data:			std_logic_vector(31 downto 0);
-	variable address:			integer range 0 to ram_size - 1;
-	variable address_counter:	integer := 0;
-	variable memwrite: 			STD_LOGIC;
-	variable memread: 			STD_LOGIC;
-	
-	begin
-	-- Initialize the file "memory.txt"
-	if(now < 1 ps)then
-		file_open(write_data_memory, "memory.txt", write_mode);
-		for i in 0 to ram_size - 1 loop
-			ram_block(i) <= std_logic_vector(to_unsigned(0, 32));
-			write(row_write, ram_block(i));
-			writeline(write_data_memory, row_write);
-		end loop;
-		file_close(write_data_memory);
-	end if;
-	
-	if(EXMEM_M = '1' AND opcode = "10101")then
-		memwrite <= '1';
-		memread <= '0';
-	elsif(EXMEM_M = '1' AND opcode = "10100")then
-		memwrite <= '0';
-		memread <= '1';
-	end if;
-	
+
 	Reg_Mem_to_forwarding <= EXMEM_register;
 	WB_Mem_to_forwarding <= EXMEM_WB;
 
+	MEMWB_WB <= EXMEM_WB;	-- Directly pass the writeback signal to next pipelin stage
+	MEMWB_M <= EXMEM_M;	-- input of multiplexer(WB)
+	MEMWB_register <= EXMEM_register; -- Directly pass the register to the next stage;
+
+	init: process (clock)
+	
+	file write_data_memory: 	text;
+	variable row_write:			line;
+	variable address:			integer range 0 to ram_size - 1;
+	variable address_counter:	integer := 0;
+	
+	begin
+	-- Initialize the memory
+	if(now = 1 ps)then
+		for i in 0 to ram_size - 1 loop
+			ram_block(i) <= "00000000000000000000000000000000";
+		end loop;
+	end if;
+
 	if(clock'event AND clock = '1') then	
-		MEMEWB_WB <= EXMEM_WB;	-- Directly pass the writeback signal to next pipelin stage
-		MEMWB_M <= EXMEM_M;	-- input of multiplexer(WB)
-		MEMWB_register <= EXMEM_register; -- Directly pass the register to the next stage;
 		address := to_integer(unsigned(ALU_out));
 		
 		if(EXMEM_M = '0') then
 		Address_to_WB <= ALU_out;	-- no need to access data memory
 		
-		else 
-			-- open the files
-			file_open(read_data_memory, "memory.txt", read_mode);
-			file_open(write_data_memory, "memory.txt", write_mode);
-			
-			--read until the desired line;
-			while(address_counter < address)
-				readline(read_data_memory, row_read);
-				readline(write_data_memory, row_write);
-				address_counter := address_counter + 4;
-			end loop;			
-			if(opcode = "10100" AND memread = '1') then	
+		else 	
+			if(opcode = "10100") then	
 				-- load data from the given address and pass it to the signal Data_Mem_out
-				read(row_read, row_data);
-				Data_Mem_out <= row_data;
+				Data_Mem_out <= ram_block(address/4);
 				address_counter := 0;
-				file_close(read_data_memory);
-				file_close(write_data_memory);
-			elsif(opcode = "10101" AND memwrite = '1')then
-				-- store data to the given address with the given value
-				write(row_write, Write_data);
-				writeline(write_data_memory, row_write);
+			elsif(opcode = "10101")then
+				ram_block(address/4) <= Write_data;
 				Data_Mem_out <= Write_data;
-				address_counter := 0;
-				file_close(read_data_memory);
-				file_close(write_data_memory);
 			end if;
 		end if;
+		
+		
+		file_open(write_data_memory, "memory.txt", WRITE_MODE);
+		for i in 0 to ram_size-1 loop
+			write(row_write, ram_block(i));
+			writeline(write_data_memory, row_write);
+		end loop;
+		file_close(write_data_memory);
+		
 	end if;
 	end process;
-
-	--Read and write should never happen at the same time.
-	waitreq_w_proc: process (memwrite)
-	begin
-		if(memwrite'event AND memwrite = '1')then
-			write_waitreq_reg <= '0' after mem_delay, '1' after mem_delay + clock_period;
-
-		end if;
-	end process;
-
-	waitreq_r_proc: process (memread)
-	begin
-		if(memread'event AND memread = '1')then
-			read_waitreq_reg <= '0' after mem_delay, '1' after mem_delay + clock_period;
-		end if;
-	end process;
-
 
 
 end implementation;
