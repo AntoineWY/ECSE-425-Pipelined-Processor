@@ -13,12 +13,9 @@ ARCHITECTURE behaviour OF Fetch_tb IS
             port(
                 clk:						in std_logic;
                 bj_target_address:		    in std_logic_vector(31 downto 0);
-                --jump_target_address:		in std_logic_vector(31 downto 0);	
                 pc_stall:				    in std_logic;
-                bj_address_ready:           in std_logic;
-                --next_pc_jump:				in std_logic;
-            --	structure_stall:	in std_logic := '0';
-              --  pc_stall:					in std_logic := '0';
+                branch_taken:               in std_logic;
+                hazard:                     in std_logic;
                 pc_update:					out std_logic_vector(31 downto 0);
                 Fetch_out:					out std_logic_vector(31 downto 0)
                 );
@@ -33,6 +30,8 @@ ARCHITECTURE behaviour OF Fetch_tb IS
 	signal memread:			std_logic := '1';
 	signal readdata:		std_logic_vector(31 downto 0);
 	signal waitrequest:		std_logic;	-- how do we do with this?
+    signal branch_taken:    std_logic;
+    signal hazard:          std_logic;
 
 	signal adder_output:	std_logic_vector(31 downto 0);
 	signal adder_result:	integer;
@@ -59,13 +58,11 @@ BEGIN
     dut: Fetch port MAP(
         clk =>clk,
         bj_target_address => bj_target_address,
-        --jump_target_address => dummy_vector,
         pc_stall => pc_stall,
-        --next_pc_jump=> dummy_logic,
-        bj_address_ready => bj_address_ready,
+        branch_taken => branch_taken,
+        hazard => hazard,
         pc_update => pc_update,
         Fetch_out => readdata
-
     );
 
     clk_process : process
@@ -78,17 +75,20 @@ BEGIN
 
     test_process : process
     BEGIN
-     
-        wait for clk_period;
-        pc_stall <= '1';
-        wait for clk_period;
-        pc_stall <= '0';
+        hazard <= '0';
+        branch_taken <= '0';
+        --pc_stall <= '0';
+
+        --wait for clk_period;
+        --pc_stall <= '1';
+        --wait for clk_period;
+        --pc_stall <= '0';
         
-        wait for clk_period*2;
-        bj_address_ready <= '1';
-        bj_target_address <= "00000000000000000000000000001000";
-        wait for clk_period;
-        bj_address_ready <= '0';
+        --wait for clk_period*2;
+        --bj_address_ready <= '1';
+        --bj_target_address <= "00000000000000000000000000001000";
+        --wait for clk_period;
+        --bj_address_ready <= '0';
         wait;
 
     END PROCESS;

@@ -8,9 +8,10 @@ entity Fetch is
 
 port(
 	clk:						in std_logic;
-	bj_target_address:			in std_logic_vector(31 downto 0);	
+	bj_target_address:			in std_logic_vector(31 downto 0);
 	pc_stall:					in std_logic;
 	branch_taken:				in std_logic;
+	hazard: 					in std_logic;
 	pc_update:					out std_logic_vector(31 downto 0);
 	Fetch_out:					out std_logic_vector(31 downto 0)
 	);
@@ -47,42 +48,60 @@ end component;
 	signal adder_output:	std_logic_vector(31 downto 0);
 	signal adder_result:	integer;
 
-	signal add_result:	std_logic_vector(31 downto 0);
+	signal add_result:		std_logic_vector(31 downto 0);
 	signal four:			integer := 4;
 
 	-- program counter initialized at zero
-	--signal pc_next:			std_logic_vector(31 downto 0);		
+	--signal pc_next:			std_logic_vector(31 downto 0);
 	signal pc_value:		std_logic_vector(31 downto 0) := "00000000000000000000000000000000";
 	signal instruction_out:	std_logic_vector(31 downto 0);
-
+	--signal stall_count: 	integer := 0;
 begin
+	--mux connection:
 
-	pc_update <= pc_value; 
+	--fetch_mux : process(bj_adress_ready)
+	--begin
+		--if (bj_adress_ready'event and rising_edge(bj_adress_ready)) then
+		--	pc_next <= bj_target_address;
+		--end if ;
+
+	--end process ; -- fetch_mux
+	-- once the clock rising edge, then pc is updated
+
+	pc_update <= pc_value; --when(bj_adress_ready = 0) else std_logic_vector(unsigned(bj_target_address) + 4);
 	address <= to_integer(unsigned(pc_value)) when (branch_taken = '0') else to_integer(unsigned(bj_target_address));
 
-	PC: process(clk,branch_taken)
+	--stall_count <= 2 when (pc_stall = '1' and stall_count = 0) else -----------------------------
+  --						   3 when (hazard = '1' and stall_count = 0); ---------------------
+
+	PC: process(clk)
 	variable stall_count:	integer:= 0;
 	begin
 		if(clk'event and rising_edge(clk)) then
 
-			if((pc_stall = '0') and (stall_count = 0)) then
-			
-				Fetch_out <= instruction_out;					
+			if((pc_stall = '0') and (hazard = '0') and (stall_count = 0)) then
+
+				Fetch_out <= instruction_out;
 				if(branch_taken = '0')then
 					pc_value <= std_logic_vector(unsigned(pc_value) + 4);
 				else
 					pc_value <= std_logic_vector(unsigned(bj_target_address)+4);
 				end if;
 			else
-				-- stall 3 cycles by inserting add $r0, $r0, $r0 
+				-- stall 3 cycles by inserting add $r0, $r0, $r0
 				-- 000000;00000;00000;00000;00000;100000;
 				if(stall_count = 0)then
-					stall_count := 3;
+					if(hazard = '1') then
+						stall_count := 3;
+					else
+						stall_count := 2;
+					end if;
+					--stall_count <= 3;
 				end if;
 				--Fetch_out <= instruction_out;
 				Fetch_out <= "00000000000000000000000000100000";
 				stall_count := stall_count - 1;
-			end if;			
+			end if;
 		end if;
 	end process;
 
@@ -93,8 +112,7 @@ begin
 			address => address,
 			memwrite => memwrite,
 			memread => memread,
-
 			readdata => instruction_out,
 			waitrequest => waitrequest
-			);	
+			);
 end fetch_arch ; -- fetch_arch

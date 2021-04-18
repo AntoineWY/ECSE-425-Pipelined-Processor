@@ -23,15 +23,15 @@ port(
 	MEM_out:			in std_logic_vector(31 downto 0); -- mux1_in3 & mux2_in2
 	-- inputs from ID stage
 	IDEX_WB_register:	in std_logic_vector(4 downto 0);
-	IDEX_Rs_register:	inout std_logic_vector(4 downto 0);
-	IDEX_Rt_register:	inout std_logic_vector(4 downto 0);
+	IDEX_Rs_register:	in std_logic_vector(4 downto 0);
+	IDEX_Rt_register:	in std_logic_vector(4 downto 0);
 	-- intput from control blocks
 	IDEX_EX:			in std_logic; -- check if alu is needed
 	IDEX_M:				in std_logic; -- simple bypass
 	IDEX_WB:			in std_logic; -- simple bypass
 	-- output to writedata in MEM
 	data_to_mem:		out std_logic_vector(31 downto 0);
-	-- output to MEM stage	
+	-- output to MEM stage
 	EXMEM_WB_register:	out std_logic_vector(4 downto 0);
 	-- output to control blocks
 	EXMEM_WB:			out std_logic;
@@ -43,7 +43,9 @@ port(
 	lo:					out std_logic_vector(31 downto 0);
 	-- main output
 	ALU_out:			out std_logic_vector(31 downto 0);
-	adder_out:			out std_logic_vector(31 downto 0)
+	adder_out:			out std_logic_vector(31 downto 0);
+	--ALU_op_out: out std_logic_vector(4 downto 0)
+	ALU_op_to_dm:				out std_logic_vector(4 downto 0)
 	);
 
 end Execution;
@@ -63,18 +65,21 @@ end component;
 
 	signal ALU_in1:			std_logic_vector(31 downto 0);
 	signal ALU_in2:			std_logic_vector(31 downto 0);
+	signal ALU_out_internal:std_logic_vector(31 downto 0);
 
 
 begin
 
 	-- bypassing control signals
+	ALU_op_to_dm <= ALU_op;
 	EXMEM_WB <= IDEX_WB;
 	EXMEM_M <= IDEX_M;
+	ALU_out <= ALU_out_internal;
 
 process(mux1_select,mux2_select,ALU_op)
 begin
 	-- return the branch target address with the extended sign
-	adder_out <= std_logic_vector(to_unsigned((to_integer(unsigned(instruction_input))*4 + to_integer(unsigned(pc_input))),adder_out'length));
+	--adder_out <= std_logic_vector(to_unsigned((to_integer(unsigned(instruction_input))*4 + to_integer(unsigned(pc_input))),adder_out'length));
 
 	-- mux1
 	if(mux1_select = "00") then
@@ -93,6 +98,7 @@ begin
 		if(ALU_op = "10101")then -- store case, the mux in the manual?
 			ALU_in1 <= readdata1;
 			ALU_in2 <= instruction_input;
+			data_to_mem <= readdata2;
 		elsif(ALU_op = "10100") then -- load case ??????
 			ALU_in1 <= readdata1;
 			ALU_in2 <= readdata2;
@@ -108,22 +114,28 @@ begin
 		ALU_in2 <= readdata2;
 	end if;
 
-	-- branch check
+	-- branch and jump check
 	if(ALU_op = "10110") then--beq
 		if(readdata1 = readdata2) then
 			branch_taken <= '1';
+			adder_out <= std_logic_vector(to_unsigned((to_integer(unsigned(instruction_input))*4 + to_integer(unsigned(pc_input))),adder_out'length));
 		else
 			branch_taken <= '0';
 		end if;
 	elsif(ALU_op = "10111") then -- bne
 		if(readdata1 /= readdata2) then
 			branch_taken <= '1';
+			adder_out <= std_logic_vector(to_unsigned((to_integer(unsigned(instruction_input))*4 + to_integer(unsigned(pc_input))),adder_out'length));
 		else
 			branch_taken <= '0';
-		end if;	
+		end if;
+	elsif(ALU_op = "11000" or ALU_op = "11001" or ALU_op = "11010") then
+		branch_taken <= '1';
+		adder_out <= ALU_out_internal;
 	else
-		branch_taken <= '0';	
+		branch_taken <= '0';
 	end if;
+
 end process;
 
 alu_block: ALU
@@ -134,6 +146,6 @@ alu_block: ALU
 		ALU_op => ALU_op,
 		hi => hi,
 		lo => lo,
-		ALU_out => ALU_out
+		ALU_out => ALU_out_internal
 		);
 end exe ; -- exe
