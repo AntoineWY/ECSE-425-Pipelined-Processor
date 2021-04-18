@@ -30,12 +30,21 @@ begin
 
 	WB_process: process(clock)
 	begin
+
+	if(now < 1 ps) then
+		Write_Data <= "00000000000000000000000000000000";	
+		Write_Reg <= "00000";
+	end if;	
+
 	if(clock'event AND clock = '1' AND MEMWB_WB = '1') then	
 		if(MEMWB_M = '1')then
 			Write_Data <= Data_Mem_out;
 		else
 			Write_Data <= Address_to_WB;
 		end if;
+	elsif(clock'event AND clock = '1' AND MEMWB_WB = '0') then	
+		Write_Data <= "00000000000000000000000000000000";	
+		Write_Reg <= "00000";	
 	end if;
 	end process;
 end implementation;
