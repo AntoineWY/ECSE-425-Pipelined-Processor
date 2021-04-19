@@ -76,7 +76,7 @@ begin
 	EXMEM_M <= IDEX_M;
 	ALU_out <= ALU_out_internal;
 
-process(mux1_select,mux2_select,ALU_op)
+process(mux1_select,mux2_select,ALU_op,readdata1,readdata2,clk)
 begin
 	-- return the branch target address with the extended sign
 	--adder_out <= std_logic_vector(to_unsigned((to_integer(unsigned(instruction_input))*4 + to_integer(unsigned(pc_input))),adder_out'length));
