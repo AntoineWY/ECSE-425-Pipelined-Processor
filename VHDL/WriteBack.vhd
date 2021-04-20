@@ -12,7 +12,7 @@ entity WriteBack is
 		Data_Mem_out:		in std_logic_vector(31 downto 0);
 		Address_to_WB:		in std_logic_vector(31 downto 0);
 		MEMWB_register:		in std_logic_vector(4 downto 0);
-		
+
 		WB_WB_to_forwarding:	out std_logic;
 	--	Reg_WB_to_forwarding:	out std_logic_vector(4 downto 0);
 		Write_Data:			out std_logic_vector(31 downto 0);
@@ -21,30 +21,57 @@ entity WriteBack is
 end WriteBack;
 
 architecture implementation of WriteBack is
+--signal start : std_logic:= '0';
+begin
 
-begin	
-	
 	WB_WB_to_forwarding <= MEMWB_WB;
 --	Reg_WB_to_forwarding <= MEMWB_register;
-	Write_Reg <= MEMWB_register;
+	--Write_Reg <= MEMWB_register;
 
-	WB_process: process(clock)
-	begin
+	Write_Reg <= "00000" when MEMWB_WB /= '1' else
+						 MEMWB_register;
 
-	if(now < 1 ps) then
-		Write_Data <= "00000000000000000000000000000000";	
-		Write_Reg <= "00000";
-	end if;	
+	Write_Data <= "00000000000000000000000000000000" when MEMWB_WB /= '1' else
+							 Data_Mem_out when (MEMWB_WB = '1' and MEMWB_M = '1') else
+							 Address_to_WB;
 
-	if(clock'event AND clock = '1' AND MEMWB_WB = '1') then	
-		if(MEMWB_M = '1')then
-			Write_Data <= Data_Mem_out;
-		else
-			Write_Data <= Address_to_WB;
-		end if;
-	elsif(clock'event AND clock = '1' AND MEMWB_WB = '0') then	
-		Write_Data <= "00000000000000000000000000000000";	
-		Write_Reg <= "00000";	
-	end if;
-	end process;
+	-- WB_process: process(clock)
+	-- begin
+	--
+	-- --if(now < 1 ps) then
+	-- 	--Write_Data <= "00000000000000000000000000000000";
+	-- 	--Write_Reg <= "00000";
+	-- --end if;
+	--
+	-- if (rising_edge(clock)) then
+	-- 	--if (start = '1') then
+	-- 		if(MEMWB_WB /= '1')then
+	-- 			Write_Data <= "00000000000000000000000000000000";
+	-- 			Write_Reg <= "00000";
+	-- 		else
+	-- 			Write_Reg <= MEMWB_register;
+	-- 			if(MEMWB_M = '1')then
+	-- 				Write_Data <= Data_Mem_out;
+	-- 			else
+	-- 				Write_Data <= Address_to_WB;
+	-- 			end if;
+	-- 		end if;
+	-- 	--else
+	-- 		--start <= '1';
+	-- 	--end if;
+	-- end if;
+	--
+	-- --Write_Reg <=
+	--
+	-- -- if(clock'event AND clock = '1' AND MEMWB_WB = '1') then
+	-- -- 	if(MEMWB_M = '1')then
+	-- -- 		Write_Data <= Data_Mem_out;
+	-- -- 	else
+	-- -- 		Write_Data <= Address_to_WB;
+	-- -- 	end if;
+	-- -- elsif(clock'event AND clock = '1' AND (MEMWB_WB = '0' or MEMWB_WB = 'U')) then
+	-- -- 	Write_Data <= "00000000000000000000000000000000";
+	-- -- 	Write_Reg <= "00000";
+	-- -- end if;
+	-- end process;
 end implementation;

@@ -75,8 +75,12 @@ begin
 	EXMEM_WB <= IDEX_WB;
 	EXMEM_M <= IDEX_M;
 	ALU_out <= ALU_out_internal;
+	EXMEM_WB_register <= IDEX_WB_register;
 
-process(mux1_select,mux2_select,ALU_op)
+	adder_out <= std_logic_vector(to_unsigned((to_integer(unsigned(instruction_input))*4 + to_integer(unsigned(pc_input))),adder_out'length)) when (ALU_op = "10111" or ALU_op = "10110") else
+								ALU_in1 when (ALU_op = "11000" or ALU_op = "11001" or ALU_op = "11010");
+
+process(mux1_select,mux2_select,ALU_op,clk)
 begin
 	-- return the branch target address with the extended sign
 	--adder_out <= std_logic_vector(to_unsigned((to_integer(unsigned(instruction_input))*4 + to_integer(unsigned(pc_input))),adder_out'length));
@@ -96,11 +100,11 @@ begin
 	if(mux2_select = "00") then
 
 		if(ALU_op = "10101")then -- store case, the mux in the manual?
-			ALU_in1 <= readdata1;
+			--ALU_in1 <= readdata1;
 			ALU_in2 <= instruction_input;
 			data_to_mem <= readdata2;
-		elsif(ALU_op = "10100") then -- load case ??????
-			ALU_in1 <= readdata1;
+		elsif(ALU_op = "10100") then -- load case
+			--ALU_in1 <= readdata1;
 			ALU_in2 <= readdata2;
 		else
 			ALU_in2 <= readdata2;
@@ -116,22 +120,22 @@ begin
 
 	-- branch and jump check
 	if(ALU_op = "10110") then--beq
-		if(readdata1 = readdata2) then
+		if(ALU_in1 = ALU_in2) then
 			branch_taken <= '1';
-			adder_out <= std_logic_vector(to_unsigned((to_integer(unsigned(instruction_input))*4 + to_integer(unsigned(pc_input))),adder_out'length));
+			--adder_out <= std_logic_vector(to_unsigned((to_integer(unsigned(instruction_input))*4 + to_integer(unsigned(pc_input))),adder_out'length));
 		else
 			branch_taken <= '0';
 		end if;
 	elsif(ALU_op = "10111") then -- bne
-		if(readdata1 /= readdata2) then
+		if(ALU_in1 /= ALU_in2) then
 			branch_taken <= '1';
-			adder_out <= std_logic_vector(to_unsigned((to_integer(unsigned(instruction_input))*4 + to_integer(unsigned(pc_input))),adder_out'length));
+			--adder_out <= std_logic_vector(to_unsigned((to_integer(unsigned(instruction_input))*4 + to_integer(unsigned(pc_input))),adder_out'length));
 		else
 			branch_taken <= '0';
 		end if;
 	elsif(ALU_op = "11000" or ALU_op = "11001" or ALU_op = "11010") then
 		branch_taken <= '1';
-		adder_out <= ALU_out_internal;
+		--adder_out <= ALU_in1;
 	else
 		branch_taken <= '0';
 	end if;

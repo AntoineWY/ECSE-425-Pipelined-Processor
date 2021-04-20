@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 use std.textio.all;
 use ieee.std_logic_textio.all;
 
-entity Instruction_Memory is 
+entity Instruction_Memory is
 	generic(
 		ram_size: 		integer := 32768;
 		mem_delay: 		time := 0 ns;
@@ -53,5 +53,7 @@ begin
 end process;
 		read_address_reg <= address/4;
 		readdata <= ram_block(read_address_reg);
+
+
 
 end rtl ; -- rtl

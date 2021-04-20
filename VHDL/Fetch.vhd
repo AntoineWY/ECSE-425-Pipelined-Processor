@@ -54,7 +54,8 @@ end component;
 	-- program counter initialized at zero
 	--signal pc_next:			std_logic_vector(31 downto 0);
 	signal pc_value:		std_logic_vector(31 downto 0) := "00000000000000000000000000000000";
-	signal instruction_out:	std_logic_vector(31 downto 0);
+	signal instruction_out:	std_logic_vector(31 downto 0):="11111111111111111111111111111111";
+	signal fetch_out_internal: std_logic_vector(31 downto 0);
 	--signal stall_count: 	integer := 0;
 begin
 	--mux connection:
@@ -81,7 +82,7 @@ begin
 
 			if((pc_stall = '0') and (hazard = '0') and (stall_count = 0)) then
 
-				Fetch_out <= instruction_out;
+				fetch_out_internal <= instruction_out;
 				if(branch_taken = '0')then
 					pc_value <= std_logic_vector(unsigned(pc_value) + 4);
 				else
@@ -92,18 +93,24 @@ begin
 				-- 000000;00000;00000;00000;00000;100000;
 				if(stall_count = 0)then
 					if(hazard = '1') then
-						stall_count := 3;
-					else
 						stall_count := 2;
+					elsif(pc_stall = '1') then
+						stall_count := 1;
 					end if;
 					--stall_count <= 3;
 				end if;
 				--Fetch_out <= instruction_out;
-				Fetch_out <= "00000000000000000000000000100000";
+				fetch_out_internal <= "00000000000000000000000000100000";
 				stall_count := stall_count - 1;
+				if(stall_count = 0) then
+					pc_value <= std_logic_vector(unsigned(pc_value) - 4);
+				end if;
 			end if;
 		end if;
 	end process;
+
+	Fetch_out <= fetch_out_internal when ((pc_stall = '0') and (hazard = '0')) else
+							"00000000000000000000000000100000";
 
 	IM: Instruction_Memory
 		port map(
