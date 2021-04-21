@@ -86,7 +86,7 @@ begin
 -- need to stall for branch and jump, need to stall 2 cycles
   stall <= '1'
           --  beq, bne, jump, jump register, jump and link
-          when (opcode = "000100" or opcode = "000101" or opcode = "000010" or (opcode = "000000" and funct = "001000") or opcode = "100011") else
+          when (opcode = "000100" or opcode = "000101" or opcode = "000010" or (opcode = "000000" and funct = "001000") or opcode = "000011") else
           '0';
 
 -- hazard for load, need to stall 3 cycles
