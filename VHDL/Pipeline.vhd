@@ -19,6 +19,8 @@ entity Pipeline is
     debug_boolean_3: out std_logic;
     debug_boolean_4: out std_logic;
     debug_boolean_5: out std_logic;
+
+    -- register debug
     reg_0, reg_1, reg_2, reg_3, reg_4, reg_5, reg_6, reg_7, reg_8: out std_logic_vector(31 downto 0);
     reg_9, reg_10, reg_11, reg_12, reg_13, reg_14, reg_15, reg_16, reg_17: out std_logic_vector(31 downto 0);
     reg_18, reg_19, reg_20, reg_21, reg_22, reg_23, reg_24, reg_25, reg_26: out std_logic_vector(31 downto 0);
@@ -380,7 +382,6 @@ begin
     execution_instruction_input <= decode_SIGN_EXTEND;
     execution_readdata1 <= decode_r_data_1;
     execution_readdata2 <= decode_r_data_2;
-
     execution_IDEX_WB_register <= decode_IDEX_WB_register;
     execution_IDEX_Rs_register <= decode_IDEXRs_forwarding;
     execution_IDEX_Rt_register <= decode_IDEXRt_forwarding;
@@ -389,23 +390,15 @@ begin
     execution_IDEX_WB <= decode_IDEX_WB;
     -- -- map decode input
     decode_instruction <= fetch_Fetch_out;
---    decode_write_data <= wb_Write_Data;--
---    decode_write_register <= wb_Write_Reg;--
-
     decode_pc_update <= fetch_pc_update;
 
     -- map fetch input
-    --fetch_bj_target_address <= execution_adder_out;
 
-
-    --fetch_bj_target_address <= "00000000000000000000000000000000";
-
-    --fetch_branch_taken <= '0';
-    --fetch_hazard <= '0';
   end if;
 end process;
+
+-- these signals move from later stages to earlier stages, therefore, no need to wait for clk signal
 fetch_pc_stall <= decode_stall;
---fetch_branch_taken <= execution_branch_taken;
 fetch_hazard <= decode_hazard;
 fetch_branch_taken <= execution_branch_taken;
 decode_write_data <= wb_Write_Data;--
@@ -419,6 +412,7 @@ fetch_bj_target_address <= execution_adder_out;
 --************** end of pipeline ********************
 
 --************** start of forwarding ****************
+-- to check if register needed is used before, and implement forwarding (for more detail, see report)
 execution_mux1_select <= "10" when (dm_EXMEM_WB = '1' and dm_EXMEM_register /= "00000" and dm_EXMEM_register = execution_IDEX_Rs_register) else
                          "01" when (wb_MEMWB_WB = '1' and wb_MEMWB_register /= "00000" and dm_EXMEM_register /= execution_IDEX_Rs_register and wb_MEMWB_register = execution_IDEX_Rs_register) else
                          "00";
@@ -432,7 +426,7 @@ execution_mux2_select <= "10" when (dm_EXMEM_WB = '1' and dm_EXMEM_register /= "
 -- no need, handled in decode
 --************* end of hazard detection ****************
 
--- debug --
+-- debug signals--
 debug_boolean_1 <= dm_EXMEM_M;
 debug_vector_1(1 downto 0) <= execution_mux1_select;
 debug_vector_2 <= decode_instruction;
