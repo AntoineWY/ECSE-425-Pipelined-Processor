@@ -27,7 +27,7 @@ Instruction_Memory_tb.vhd
 02-fetchinstr-TCL.tcl   
 03-decode-TCL.tcl       
 04-execution-TCL.tcl    
-05-3stages-TCL.tcl 
+
 
 3. If you want to run a entire program, please use the "pipeline-TCL" script. Use command "source pipeline-TCL" in modelSim command transcript will run the code.
 

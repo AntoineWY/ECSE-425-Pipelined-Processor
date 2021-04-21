@@ -44,7 +44,6 @@ port(
 	-- main output
 	ALU_out:			out std_logic_vector(31 downto 0);
 	adder_out:			out std_logic_vector(31 downto 0);
-	--ALU_op_out: out std_logic_vector(4 downto 0)
 	ALU_op_to_dm:				out std_logic_vector(4 downto 0)
 	);
 
@@ -71,21 +70,27 @@ end component;
 begin
 
 	-- bypassing control signals
-	ALU_op_to_dm <= ALU_op;
-	EXMEM_WB <= IDEX_WB;
+	-- those signals are not changed in ex stages.
+	-- thus there are passed through right away
+	ALU_op_to_dm <= ALU_op;	-- ALU_op (our own version of opcode) tells data memory whether it is a store or ld
+	EXMEM_WB <= IDEX_WB; --control logics
 	EXMEM_M <= IDEX_M;
-	ALU_out <= ALU_out_internal;
 	EXMEM_WB_register <= IDEX_WB_register;
 
+	-- pass EX result to next stage to the DM 
+	ALU_out <= ALU_out_internal;
+	
+	-- this handles branch or jump
+	-- the first condition contains conditions for BNE and BEQ. Thus we add offset to current PC to the desired position
+	-- second is jump
+	-- this output gives back to fetch stage
 	adder_out <= std_logic_vector(to_unsigned((to_integer(unsigned(instruction_input))*4 + to_integer(unsigned(pc_input))),adder_out'length)) when (ALU_op = "10111" or ALU_op = "10110") else
 								ALU_in1 when (ALU_op = "11000" or ALU_op = "11001" or ALU_op = "11010");
 
 process(mux1_select,mux2_select,ALU_op,clk)
 begin
-	-- return the branch target address with the extended sign
-	--adder_out <= std_logic_vector(to_unsigned((to_integer(unsigned(instruction_input))*4 + to_integer(unsigned(pc_input))),adder_out'length));
 
-	-- mux1
+	-- mux1: handles forwarding cases for input 1
 	if(mux1_select = "00") then
 		ALU_in1 <= readdata1;
 	elsif(mux1_select = "01") then
@@ -96,15 +101,13 @@ begin
 		ALU_in1 <= readdata1;
 	end if;
 
-	-- mux2
+	-- mux2; handles forwarding cases for input 2
 	if(mux2_select = "00") then
 
 		if(ALU_op = "10101")then -- store case, the mux in the manual?
-			--ALU_in1 <= readdata1;
 			ALU_in2 <= instruction_input;
 			data_to_mem <= readdata2;
 		elsif(ALU_op = "10100") then -- load case
-			--ALU_in1 <= readdata1;
 			ALU_in2 <= readdata2;
 		else
 			ALU_in2 <= readdata2;
@@ -122,20 +125,17 @@ begin
 	if(ALU_op = "10110") then--beq
 		if(ALU_in1 = ALU_in2) then
 			branch_taken <= '1';
-			--adder_out <= std_logic_vector(to_unsigned((to_integer(unsigned(instruction_input))*4 + to_integer(unsigned(pc_input))),adder_out'length));
 		else
 			branch_taken <= '0';
 		end if;
 	elsif(ALU_op = "10111") then -- bne
 		if(ALU_in1 /= ALU_in2) then
-			branch_taken <= '1';
-			--adder_out <= std_logic_vector(to_unsigned((to_integer(unsigned(instruction_input))*4 + to_integer(unsigned(pc_input))),adder_out'length));
+			branch_taken <= '1';	
 		else
 			branch_taken <= '0';
 		end if;
-	elsif(ALU_op = "11000" or ALU_op = "11001" or ALU_op = "11010") then
+	elsif(ALU_op = "11000" or ALU_op = "11001" or ALU_op = "11010") then -- jump, unconditional
 		branch_taken <= '1';
-		--adder_out <= ALU_in1;
 	else
 		branch_taken <= '0';
 	end if;
