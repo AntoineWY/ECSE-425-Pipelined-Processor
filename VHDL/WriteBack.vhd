@@ -7,71 +7,35 @@ use ieee.std_logic_textio.all;
 entity WriteBack is
 	port(
 		clock:				in std_logic;
-		MEMWB_M:			in std_logic; -- input of multiplexer
+		MEMWB_M:			in std_logic; -- input of multiplexer, data memory access flag
 		MEMWB_WB:			in std_logic; -- writeback flag;
-		Data_Mem_out:		in std_logic_vector(31 downto 0);
-		Address_to_WB:		in std_logic_vector(31 downto 0);
+		Data_Mem_out:		in std_logic_vector(31 downto 0); -- data loaded from data memory
+		Address_to_WB:		in std_logic_vector(31 downto 0); -- actually it should be the data from ALU, wrong name
 		MEMWB_register:		in std_logic_vector(4 downto 0);
 
 		WB_WB_to_forwarding:	out std_logic;
-	--	Reg_WB_to_forwarding:	out std_logic_vector(4 downto 0);
 		Write_Data:			out std_logic_vector(31 downto 0);
 		Write_Reg:			out std_logic_vector(4 downto 0)
 	);
 end WriteBack;
 
 architecture implementation of WriteBack is
---signal start : std_logic:= '0';
 begin
-
+	
+	-- the writeback flag at pipeline stage MEM/WB should be directly forward to the forwarding unit
 	WB_WB_to_forwarding <= MEMWB_WB;
---	Reg_WB_to_forwarding <= MEMWB_register;
-	--Write_Reg <= MEMWB_register;
-
+	
+	--if the writeback flag signal is low, then automatically set the write_reg signal to 00000, indicating that there's nothing to write to the register
+	--otherwise, write the data sending by input signal MEMWB_register.
 	Write_Reg <= "00000" when MEMWB_WB /= '1' else
 						 MEMWB_register;
 
+	--if the writeback flag signal is low, then automatically set the write_data signal to 32 bits of 0, indicating that there's no data to write back
+	--otherwise, check the memory access flag.
+	--if data memory is accessed, then send the data from Data_Mem_out to writeback signal, which indicates that the write back data is loaded from memory
+	--if data memory is not accessed, then send the data from Address_to_WB, which indicates that the write back data is directly passed from the ALU output
 	Write_Data <= "00000000000000000000000000000000" when MEMWB_WB /= '1' else
 							 Data_Mem_out when (MEMWB_WB = '1' and MEMWB_M = '1') else
 							 Address_to_WB;
 
-	-- WB_process: process(clock)
-	-- begin
-	--
-	-- --if(now < 1 ps) then
-	-- 	--Write_Data <= "00000000000000000000000000000000";
-	-- 	--Write_Reg <= "00000";
-	-- --end if;
-	--
-	-- if (rising_edge(clock)) then
-	-- 	--if (start = '1') then
-	-- 		if(MEMWB_WB /= '1')then
-	-- 			Write_Data <= "00000000000000000000000000000000";
-	-- 			Write_Reg <= "00000";
-	-- 		else
-	-- 			Write_Reg <= MEMWB_register;
-	-- 			if(MEMWB_M = '1')then
-	-- 				Write_Data <= Data_Mem_out;
-	-- 			else
-	-- 				Write_Data <= Address_to_WB;
-	-- 			end if;
-	-- 		end if;
-	-- 	--else
-	-- 		--start <= '1';
-	-- 	--end if;
-	-- end if;
-	--
-	-- --Write_Reg <=
-	--
-	-- -- if(clock'event AND clock = '1' AND MEMWB_WB = '1') then
-	-- -- 	if(MEMWB_M = '1')then
-	-- -- 		Write_Data <= Data_Mem_out;
-	-- -- 	else
-	-- -- 		Write_Data <= Address_to_WB;
-	-- -- 	end if;
-	-- -- elsif(clock'event AND clock = '1' AND (MEMWB_WB = '0' or MEMWB_WB = 'U')) then
-	-- -- 	Write_Data <= "00000000000000000000000000000000";
-	-- -- 	Write_Reg <= "00000";
-	-- -- end if;
-	-- end process;
 end implementation;
