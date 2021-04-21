@@ -29,6 +29,8 @@ Instruction_Memory_tb.vhd
 04-execution-TCL.tcl    
 
 
-3. If you want to run a entire program, please use the "pipeline-TCL" script. Use command "source pipeline-TCL" in modelSim command transcript will run the code.
+3. Before running any programs, please copy the generated binary code for instructions into file "program.txt".
 
-4. For result of the test of each components, use TCLs 01-05 and use command "source" to run in modelSim.
+4. If you want to run a entire program and see all registers and major intermediate outputs, please use the "pipeline-TCL" script. Use command "source pipeline-TCL" in modelSim command transcript will run the code.
+
+5. For result of the test of each components, use TCLs 01-05 and use command "source" to run in modelSim.
