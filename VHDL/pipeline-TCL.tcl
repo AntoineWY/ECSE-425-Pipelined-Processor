@@ -23,11 +23,18 @@ force -deposit clk 0 0 ns, 1 0.5 ns -repeat 1 ns
 proc AddWaves {} {
 	;#Add waves we're interested in to the Wave window
     add wave -position end sim:/Pipeline_tb/clk
-		add wave -position end sim:/Pipeline_tb/debug_boolean_1
-		add wave -position end sim:/Pipeline_tb/debug_vector_1
-		add wave -position end sim:/Pipeline_tb/debug_vector_2
-		add wave -position end sim:/Pipeline_tb/debug_vector_3
-				add wave -position end sim:/Pipeline_tb/debug_vector_4
+		add wave -position end sim:/Pipeline_tb/fetch_instruction
+		add wave -position end sim:/Pipeline_tb/decode_instruction_in
+		add wave -position end sim:/Pipeline_tb/memory_write_data
+		add wave -position end sim:/Pipeline_tb/register_write_data
+		add wave -position end sim:/Pipeline_tb/execution_out
+		add wave -position end sim:/Pipeline_tb/forwarding_signal_mux_1
+		add wave -position end sim:/Pipeline_tb/forwarding_signal_mux_2
+		add wave -position end sim:/Pipeline_tb/stall_signal
+		add wave -position end sim:/Pipeline_tb/branch_taken_signal
+		add wave -position end sim:/Pipeline_tb/memory_write_signal
+		add wave -position end sim:/Pipeline_tb/register_wb_signal
+		add wave -position end sim:/Pipeline_tb/execution_flag
 		add wave -position end sim:/Pipeline_tb/reg_1
 		add wave -position end sim:/Pipeline_tb/reg_2
 		add wave -position end sim:/Pipeline_tb/reg_3
@@ -59,9 +66,6 @@ proc AddWaves {} {
 		add wave -position end sim:/Pipeline_tb/reg_29
 		add wave -position end sim:/Pipeline_tb/reg_30
 		add wave -position end sim:/Pipeline_tb/reg_31
-
-
-
 
 }
 

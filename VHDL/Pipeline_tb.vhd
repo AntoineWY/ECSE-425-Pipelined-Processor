@@ -12,16 +12,18 @@ ARCHITECTURE Behaviour of Pipeline_tb IS
 	port(
 	clk:				in std_logic;
 	--- debug protocal
-	debug_vector_1: out std_logic_vector(31 downto 0);
-	debug_vector_2: out std_logic_vector(31 downto 0);
-	debug_vector_3: out std_logic_vector(31 downto 0);
-	debug_vector_4: out std_logic_vector(31 downto 0);
-	debug_vector_5: out std_logic_vector(31 downto 0);
-	debug_boolean_1: out std_logic;
-	debug_boolean_2: out std_logic;
-	debug_boolean_3: out std_logic;
-	debug_boolean_4: out std_logic;
-	debug_boolean_5: out std_logic;
+	fetch_instruction: out std_logic_vector(31 downto 0);
+	decode_instruction_in: out std_logic_vector(31 downto 0);
+	memory_write_data: out std_logic_vector(31 downto 0);
+	register_write_data: out std_logic_vector(31 downto 0);
+	execution_out: out std_logic_vector(31 downto 0);
+	forwarding_signal_mux_1 : out std_logic_vector (1 downto 0);
+	forwarding_signal_mux_2 : out std_logic_vector (1 downto 0);
+	stall_signal: out std_logic;
+	branch_taken_signal: out std_logic;
+	memory_write_signal: out std_logic;
+	register_wb_signal: out std_logic;
+	execution_flag: out std_logic;
 	reg_0, reg_1, reg_2, reg_3, reg_4, reg_5, reg_6, reg_7, reg_8: out std_logic_vector(31 downto 0);
 	reg_9, reg_10, reg_11, reg_12, reg_13, reg_14, reg_15, reg_16, reg_17: out std_logic_vector(31 downto 0);
 	reg_18, reg_19, reg_20, reg_21, reg_22, reg_23, reg_24, reg_25, reg_26: out std_logic_vector(31 downto 0);
@@ -33,16 +35,18 @@ ARCHITECTURE Behaviour of Pipeline_tb IS
 		signal clk : std_logic := '0';
     constant clk_period : time := 1 ns;
 		--- debug protocal
-		signal debug_vector_1:  std_logic_vector(31 downto 0);
-		signal debug_vector_2:  std_logic_vector(31 downto 0);
-		signal debug_vector_3:  std_logic_vector(31 downto 0);
-		signal debug_vector_4:  std_logic_vector(31 downto 0);
-		signal debug_vector_5:  std_logic_vector(31 downto 0);
-		signal debug_boolean_1:  std_logic;
-		signal debug_boolean_2:  std_logic;
-		signal debug_boolean_3:  std_logic;
-		signal debug_boolean_4:  std_logic;
-		signal debug_boolean_5:  std_logic;
+		signal fetch_instruction:  std_logic_vector(31 downto 0);
+		signal decode_instruction_in:  std_logic_vector(31 downto 0);
+		signal memory_write_data:  std_logic_vector(31 downto 0);
+		signal register_write_data:  std_logic_vector(31 downto 0);
+		signal execution_out:  std_logic_vector(31 downto 0);
+		signal forwarding_signal_mux_1 : std_logic_vector (1 downto 0);
+    signal forwarding_signal_mux_2 : std_logic_vector (1 downto 0);
+		signal stall_signal:  std_logic;
+		signal branch_taken_signal:  std_logic;
+		signal memory_write_signal:  std_logic;
+		signal register_wb_signal:  std_logic;
+		signal execution_flag:  std_logic;
 
 		signal reg_0, reg_1, reg_2, reg_3, reg_4, reg_5, reg_6, reg_7, reg_8: std_logic_vector(31 downto 0);
     signal reg_9, reg_10, reg_11, reg_12, reg_13, reg_14, reg_15, reg_16, reg_17: std_logic_vector(31 downto 0);
@@ -53,16 +57,18 @@ ARCHITECTURE Behaviour of Pipeline_tb IS
 
     	dut: Pipeline port MAP(
     		clk => clk,
-				debug_vector_1 => debug_vector_1,
-				debug_vector_2 => debug_vector_2,
-				debug_vector_3 => debug_vector_3,
-				debug_vector_4 => debug_vector_4,
-				debug_vector_5 => debug_vector_5,
-				debug_boolean_1 => debug_boolean_1,
-				debug_boolean_2 => debug_boolean_2,
-				debug_boolean_3 => debug_boolean_3,
-				debug_boolean_4 => debug_boolean_4,
-				debug_boolean_5 => debug_boolean_5,
+				fetch_instruction => fetch_instruction,
+				decode_instruction_in => decode_instruction_in,
+				memory_write_data => memory_write_data,
+				register_write_data => register_write_data,
+				execution_out => execution_out,
+				forwarding_signal_mux_1 => forwarding_signal_mux_1,
+				forwarding_signal_mux_2 => forwarding_signal_mux_2,
+				stall_signal => stall_signal,
+				branch_taken_signal => branch_taken_signal,
+				memory_write_signal => memory_write_signal,
+				register_wb_signal => register_wb_signal,
+				execution_flag => execution_flag,
 				reg_1 => reg_1,
 		    reg_2 => reg_2,
 		    reg_3 => reg_3,

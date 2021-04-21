@@ -9,16 +9,20 @@ entity Pipeline is
   port(
   	clk:				in std_logic;
     --- debug protocal
-    debug_vector_1: out std_logic_vector(31 downto 0);
-    debug_vector_2: out std_logic_vector(31 downto 0);
-    debug_vector_3: out std_logic_vector(31 downto 0);
-    debug_vector_4: out std_logic_vector(31 downto 0);
-    debug_vector_5: out std_logic_vector(31 downto 0);
-    debug_boolean_1: out std_logic;
-    debug_boolean_2: out std_logic;
-    debug_boolean_3: out std_logic;
-    debug_boolean_4: out std_logic;
-    debug_boolean_5: out std_logic;
+    fetch_instruction: out std_logic_vector(31 downto 0);
+    decode_instruction_in: out std_logic_vector(31 downto 0);
+    memory_write_data: out std_logic_vector(31 downto 0);
+    register_write_data: out std_logic_vector(31 downto 0);
+    execution_out: out std_logic_vector(31 downto 0);
+
+    forwarding_signal_mux_1 : out std_logic_vector (1 downto 0);
+    forwarding_signal_mux_2 : out std_logic_vector (1 downto 0);
+
+    stall_signal: out std_logic;
+    branch_taken_signal: out std_logic;
+    memory_write_signal: out std_logic;
+    register_wb_signal: out std_logic;
+    execution_flag: out std_logic;
 
     -- register debug
     reg_0, reg_1, reg_2, reg_3, reg_4, reg_5, reg_6, reg_7, reg_8: out std_logic_vector(31 downto 0);
@@ -427,10 +431,16 @@ execution_mux2_select <= "10" when (dm_EXMEM_WB = '1' and dm_EXMEM_register /= "
 --************* end of hazard detection ****************
 
 -- debug signals--
-debug_boolean_1 <= dm_EXMEM_M;
-debug_vector_1(1 downto 0) <= execution_mux1_select;
-debug_vector_2 <= decode_instruction;
-debug_vector_3 <= dm_ALU_out;
-debug_vector_4 <= dm_Write_data;
-
+fetch_instruction <= fetch_Fetch_out;
+decode_instruction_in <= decode_instruction;
+memory_write_data <= dm_Write_data;
+register_write_data <= wb_Write_Data;
+execution_out <= execution_ALU_out;
+forwarding_signal_mux_1 <= execution_mux1_select;
+forwarding_signal_mux_2 <= execution_mux2_select;
+stall_signal <= fetch_pc_stall;
+branch_taken_signal <= fetch_branch_taken;
+memory_write_signal <= dm_EXMEM_M;
+register_wb_signal <= wb_MEMWB_WB;
+execution_flag <= execution_IDEX_EX;
 end structure;

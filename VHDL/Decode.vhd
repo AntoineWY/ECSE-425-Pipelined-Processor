@@ -551,6 +551,22 @@ BEGIN
     end if;
 end process;
 
+-- write register value to external file
+process(clk)
+file write_data_register : text;
+variable row: line;
+
+BEGIN
+if (clk'event and rising_edge(clk)) then
+  file_open(write_data_register, "register_file.txt", WRITE_MODE);
+  for i in 0 to 31 loop
+      write(row,registers(i));
+      writeline(write_data_register,row);
+  end loop;
+  file_close(write_data_register);
+end if;
+end process;
+
 ---- debug
 reg_0 <= registers(0);
 reg_1 <= registers(1);
