@@ -72,4 +72,4 @@ proc AddWaves {} {
 ;# Add the waves
 AddWaves
 ;# Run for 10000 ns
-run 100ns
+run 10000ns
