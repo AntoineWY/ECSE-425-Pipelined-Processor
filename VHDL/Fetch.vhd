@@ -38,42 +38,23 @@ component Instruction_Memory is
 end component;
 
 	signal writedata: 		std_logic_vector(31 downto 0);
-	signal address: 		integer range 0 to 32768-1;
-	signal memwrite: 		std_logic := '0';
-	signal memread:			std_logic := '1';
+	signal address: 		integer range 0 to 32768-1;	-- address to go for in the instr mem
+	signal memwrite: 		std_logic := '0';	-- As a fetch unit, thus write never zero.
+	signal memread:			std_logic := '1';	-- As a fetch unit, thus read forever one.
 	signal readdata:		std_logic_vector(31 downto 0);
-	signal waitrequest:		std_logic;	-- how do we do with this?
---	signal pc_stall:		std_logic;
-
-	signal adder_output:	std_logic_vector(31 downto 0);
-	signal adder_result:	integer;
-
-	signal add_result:		std_logic_vector(31 downto 0);
-	signal four:			integer := 4;
+	signal waitrequest:		std_logic;	-- how do we do with this? (might not used)
 
 	-- program counter initialized at zero
-	--signal pc_next:			std_logic_vector(31 downto 0);
 	signal pc_value:		std_logic_vector(31 downto 0) := "00000000000000000000000000000000";
+
+	-- initialize to avoid "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU". Not a valid instr anyway
 	signal instruction_out:	std_logic_vector(31 downto 0):="11111111111111111111111111111111";
+	
 	signal fetch_out_internal: std_logic_vector(31 downto 0);
-	--signal stall_count: 	integer := 0;
+
 begin
-	--mux connection:
-
-	--fetch_mux : process(bj_adress_ready)
-	--begin
-		--if (bj_adress_ready'event and rising_edge(bj_adress_ready)) then
-		--	pc_next <= bj_target_address;
-		--end if ;
-
-	--end process ; -- fetch_mux
-	-- once the clock rising edge, then pc is updated
-
 	pc_update <= pc_value; --when(bj_adress_ready = 0) else std_logic_vector(unsigned(bj_target_address) + 4);
-	address <= to_integer(unsigned(pc_value)) when (branch_taken = '0') else to_integer(unsigned(bj_target_address));
-
-	--stall_count <= 2 when (pc_stall = '1' and stall_count = 0) else -----------------------------
-  --						   3 when (hazard = '1' and stall_count = 0); ---------------------
+	address <= to_integer(unsigned(pc_value)) when (branch_taken = '0') else to_integer(unsigned(bj_target_address));  -- see if there is a branch to fetch
 
 	PC: process(clk)
 	variable stall_count:	integer:= 0;
@@ -82,7 +63,9 @@ begin
 
 			if((pc_stall = '0') and (hazard = '0') and (stall_count = 0)) then
 
-				fetch_out_internal <= instruction_out;
+				fetch_out_internal <= instruction_out;	-- sending the instruction fetched from the instr_mem here
+
+				-- based on branch situation, sending next PC increment or the branch target to pc
 				if(branch_taken = '0')then
 					pc_value <= std_logic_vector(unsigned(pc_value) + 4);
 				else
@@ -97,20 +80,21 @@ begin
 					elsif(pc_stall = '1') then
 						stall_count := 1;
 					end if;
-					--stall_count <= 3;
+					
 				end if;
-				--Fetch_out <= instruction_out;
-				fetch_out_internal <= "00000000000000000000000000100000";
+				fetch_out_internal <= "00000000000000000000000000100000";	-- this is a stall, thus load bubble instruction
 				stall_count := stall_count - 1;
 				if(stall_count = 0) then
-					pc_value <= std_logic_vector(unsigned(pc_value) - 4);
+					pc_value <= std_logic_vector(unsigned(pc_value) - 4);  -- offset the previous increment in the last cycles
 				end if;
 			end if;
 		end if;
 	end process;
 
+	-- put this outside process blovk
+	-- to ensure that fetched instr can be flushed right away when a branch or hazard is detected
 	Fetch_out <= fetch_out_internal when ((pc_stall = '0') and (hazard = '0')) else
-							"00000000000000000000000000100000";
+							"00000000000000000000000000100000";	---- there is a stall or hazrad, thus load bubble instruction
 
 	IM: Instruction_Memory
 		port map(
