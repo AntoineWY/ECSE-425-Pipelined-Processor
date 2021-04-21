@@ -56,7 +56,7 @@ begin
 
 	begin
 	-- Initialize the memory to all 0
-	if(now = 1 ps)then
+	if(now < 1 ps)then
 		for i in 0 to ram_size - 1 loop
 			ram_block(i) <= "00000000000000000000000000000000";
 		end loop;
