@@ -93,7 +93,7 @@ END COMPONENT;
 			EXMEM_M <= '1';
 			opcode <= "10101";
 			ALU_out <= "00000000000000000000000000000100";
-			Write_data <= "11111111111111111111110000011111";
+			Write_data <= "00000111100001111111110000011111";
 			wait for clk_period;
 			EXMEM_M <= '0';
 			opcode <= "10101";
