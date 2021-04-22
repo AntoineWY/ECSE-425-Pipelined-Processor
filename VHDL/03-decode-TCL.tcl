@@ -37,6 +37,40 @@ proc AddWaves {} {
  		add wave -position end sim:/Decode_tb/IDEX_WB_register
 
 		add wave -position end sim:/Decode_tb/stall
+		add wave -position end sim:/Decode_tb/hazard
+		add wave -position end sim:/Decode_tb/pc_update_to_ex
+		add wave -position end sim:/Decode_tb/reg_1
+		add wave -position end sim:/Decode_tb/reg_2
+		add wave -position end sim:/Decode_tb/reg_3
+		add wave -position end sim:/Decode_tb/reg_4
+		add wave -position end sim:/Decode_tb/reg_5
+		add wave -position end sim:/Decode_tb/reg_6
+		add wave -position end sim:/Decode_tb/reg_7
+		add wave -position end sim:/Decode_tb/reg_8
+		add wave -position end sim:/Decode_tb/reg_9
+		add wave -position end sim:/Decode_tb/reg_10
+		add wave -position end sim:/Decode_tb/reg_11
+		add wave -position end sim:/Decode_tb/reg_12
+		add wave -position end sim:/Decode_tb/reg_13
+		add wave -position end sim:/Decode_tb/reg_14
+		add wave -position end sim:/Decode_tb/reg_15
+		add wave -position end sim:/Decode_tb/reg_16
+		add wave -position end sim:/Decode_tb/reg_17
+		add wave -position end sim:/Decode_tb/reg_18
+		add wave -position end sim:/Decode_tb/reg_19
+		add wave -position end sim:/Decode_tb/reg_20
+		add wave -position end sim:/Decode_tb/reg_21
+		add wave -position end sim:/Decode_tb/reg_22
+		add wave -position end sim:/Decode_tb/reg_23
+		add wave -position end sim:/Decode_tb/reg_24
+		add wave -position end sim:/Decode_tb/reg_25
+		add wave -position end sim:/Decode_tb/reg_26
+		add wave -position end sim:/Decode_tb/reg_27
+		add wave -position end sim:/Decode_tb/reg_28
+		add wave -position end sim:/Decode_tb/reg_29
+		add wave -position end sim:/Decode_tb/reg_30
+		add wave -position end sim:/Decode_tb/reg_31
+
 
 
 

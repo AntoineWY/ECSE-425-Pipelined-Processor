@@ -28,8 +28,8 @@ Instruction_Memory_tb.vhd
 03-decode-TCL.tcl       
 04-execution-TCL.tcl    
 
-
 3. Before running any programs, please copy the generated binary code for instructions into file "program.txt".
+
 
 4. If you want to run a entire program and see all registers and major intermediate outputs, please use the "pipeline-TCL" script. Use command "source pipeline-TCL" in modelSim command transcript will run the code.
 

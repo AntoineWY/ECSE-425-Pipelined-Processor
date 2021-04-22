@@ -19,15 +19,13 @@ entity Decode is
     pc_update: in std_logic_vector(31 downto 0); --pc+4 -- next pc value from instruction fectch stage
 
     -- output data to execution
-    r_data_1: out std_logic_vector(31 downto 0); --done
-    r_data_2: out std_logic_vector(31 downto 0);  -- done
+    r_data_1: out std_logic_vector(31 downto 0); --done -- data to execution stage, read data 1
+    r_data_2: out std_logic_vector(31 downto 0);  -- done -- data to execution stage, read data 2
 
     -- opcode for execution
     ALU_op: out std_logic_vector(4 downto 0); --done
 
     -- operation flag
-    --JUMP:     out std_logic;
-    --JUMP_ADDRESS: out std_logic_vector(31 downto 0);  -- the sign extend address
     IDEX_WB:   out std_logic; --done -- write back flag
     IDEX_M:    out std_logic; -- done -- memory access flag
     IDEX_EX:   out std_logic; -- done --execution flag
@@ -40,8 +38,8 @@ entity Decode is
     pc_update_to_ex: out std_logic_vector (31 downto 0); -- pc update extend to next stage (execution)
 
 
-    stall: out std_logic; -- stall flag
-    hazard: out std_logic; -- hazard flag
+    stall: out std_logic; -- stall flag -- used for jump and branch
+    hazard: out std_logic; -- hazard flag -- used for load
 
     -- debug registers
     reg_0, reg_1, reg_2, reg_3, reg_4, reg_5, reg_6, reg_7, reg_8: out std_logic_vector(31 downto 0);
@@ -65,16 +63,19 @@ architecture implementation of Decode is
 
   signal HI_reg, LO_reg : std_logic_vector(31 downto 0) := "00000000000000000000000000000000"; -- HI and LO register, initialized to 0
   signal four : unsigned(31 downto 0) := "00000000000000000000000000000100"; -- four
-  signal opcode : std_logic_vector(5 downto 0); -- opcode
-  signal Rs, Rt, Rd : std_logic_vector(4 downto 0); -- input registers from instruction
-  signal shamt  : std_logic_vector(4 downto 0); -- shamt
-  signal funct  : std_logic_vector(5 downto 0); -- funct
-  signal immediate  : std_logic_vector(15 downto 0); -- immediate value
-  signal address  : std_logic_vector(25 downto 0); -- J type, address
+  signal opcode : std_logic_vector(5 downto 0); -- opcode --extracted from instruction
+  signal Rs, Rt, Rd : std_logic_vector(4 downto 0); -- input registers -- extracted from instruction
+  signal shamt  : std_logic_vector(4 downto 0); -- shamt --extracted from instruction
+  signal funct  : std_logic_vector(5 downto 0); -- funct -- extracted from instrction
+  signal immediate  : std_logic_vector(15 downto 0); -- immediate value -- extracted from instruction
+  signal address  : std_logic_vector(25 downto 0); -- J type, address -- extracted from address
 
 
 begin
+  -- pc value relay to execution
   pc_update_to_ex <= pc_update;
+
+  -- extract and separate instruction
   funct <= instruction(5 downto 0);
   shamt <= instruction(10 downto 6);
   Rs <= instruction(25 downto 21);
@@ -86,7 +87,7 @@ begin
 -- need to stall for branch and jump, need to stall 2 cycles
   stall <= '1'
           --  beq, bne, jump, jump register, jump and link
-          when (opcode = "000100" or opcode = "000101" or opcode = "000010" or (opcode = "000000" and funct = "001000") or opcode = "100011") else
+          when (opcode = "000100" or opcode = "000101" or opcode = "000010" or (opcode = "000000" and funct = "001000") or opcode = "000011") else
           '0';
 
 -- hazard for load, need to stall 3 cycles
@@ -114,21 +115,21 @@ begin
               when (opcode = "000000" and funct = "100111" and Rs /= "00000") else
               registers(to_integer(unsigned(Rs))) --xor
               when (opcode = "000000" and funct = "100110" and Rs /= "00000") else
-              "00000000000000000000000000000000" -- move from HI
+              "00000000000000000000000000000000" -- move from HI -- no need to use execution stage
               when (opcode = "000000" and funct = "010000") else--10
-              "00000000000000000000000000000000" --move from lO
+              "00000000000000000000000000000000" --move from lO -- no need to use executino stage
               when (opcode = "000000" and funct = "010010") else--11
-              "000000000000000000000000000"&shamt -- shift left logical
+              "000000000000000000000000000"&shamt -- shift left logical -- unsigned extend
               when (opcode = "000000" and funct = "000000") else
-              "000000000000000000000000000"&shamt --shift right logical
+              "000000000000000000000000000"&shamt --shift right logical -- unsigned extend
               when (opcode = "000000" and funct = "000010") else
-              "000000000000000000000000000"&shamt -- shift right arithmetic
+              "000000000000000000000000000"&shamt -- shift right arithmetic -- unsigned extend
               when (opcode = "000000" and funct = "000011") else
               registers(to_integer(unsigned(Rs))) -- jump register
-              when (opcode = "000000" and funct = "001000" and Rs /= "00000") else---- last R type-------
-              pc_update(31 downto 28)&instruction(25 downto 0)&"00" -- jump
+              when (opcode = "000000" and funct = "001000" and Rs /= "00000") else---- last R type instruction-------
+              pc_update(31 downto 28)&instruction(25 downto 0)&"00" -- jump -- construct new address to jump
               when (opcode = "000010" ) else
-              pc_update(31 downto 28)&instruction(25 downto 0)&"00" -- jump and link
+              pc_update(31 downto 28)&instruction(25 downto 0)&"00" -- jump and link -- construct new address to jump
               when (opcode = "000011" ) else------ last J type ---------
               registers(to_integer(unsigned(Rs))) -- addi
               when (opcode = "001000" and Rs /= "00000") else
@@ -171,9 +172,9 @@ r_data_2 <= registers(to_integer(unsigned(Rt)))-- add
             when (opcode = "000000" and funct = "100111" and Rt /= "00000") else
             registers(to_integer(unsigned(Rt)))--xor
             when (opcode = "000000" and funct = "100110" and Rt /= "00000") else
-            "00000000000000000000000000000000"-- move from HI
+            "00000000000000000000000000000000"-- move from HI -- no need to use execution
             when (opcode = "000000" and funct = "010000") else--10
-            "00000000000000000000000000000000"--move from lO
+            "00000000000000000000000000000000"--move from lO -- no need to use execution
             when (opcode = "000000" and funct = "010010") else--11
             registers(to_integer(unsigned(Rt)))-- shift left logical
             when (opcode = "000000" and funct = "000000" and Rt /= "00000") else
@@ -181,36 +182,36 @@ r_data_2 <= registers(to_integer(unsigned(Rt)))-- add
             when (opcode = "000000" and funct = "000010" and Rt /= "00000") else
             registers(to_integer(unsigned(Rt)))-- shift right arithmetic
             when (opcode = "000000" and funct = "000011" and Rt /= "00000") else
-            "00000000000000000000000000000000"-- jump register
+            "00000000000000000000000000000000"-- jump register -- no need to use read data 2
             when (opcode = "000000" and funct = "001000") else---- last R type
-            "00000000000000000000000000000000"-- jump
+            "00000000000000000000000000000000"-- jump --no need to use read data 2
             when (opcode = "000010" ) else
-            "00000000000000000000000000000000"-- jump and link
+            "00000000000000000000000000000000"-- jump and link -- no need to use read data 2
             when (opcode = "000011" ) else------ last J type
             "1111111111111111"&immediate-- addi
             when (opcode = "001000" and immediate(15)='1') else--sign extend
             "0000000000000000"&immediate-- addi
             when (opcode = "001000" and immediate(15)='0') else--sign extend
             "1111111111111111"&immediate--slti
-            when (opcode = "001010" and immediate(15)='1') else--need sign extend
+            when (opcode = "001010" and immediate(15)='1') else--sign extend
             "0000000000000000"&immediate--slti
-            when (opcode = "001010" and immediate(15)='0') else--need sign extend
-            "0000000000000000"&immediate--andi
+            when (opcode = "001010" and immediate(15)='0') else--sign extend
+            "0000000000000000"&immediate--andi -- zero extend
             when (opcode = "001100" ) else
-            "0000000000000000"&immediate--ori
+            "0000000000000000"&immediate--ori -- zero extend
             when (opcode = "001101" ) else
-            "0000000000000000"&immediate--xori
+            "0000000000000000"&immediate--xori -- zero extend
             when (opcode = "001110" ) else
-            "00000000000000000000000000000000"--lui
+            "0000000000000000"&immediate--lui
             when (opcode = "001111" ) else
             "1111111111111111"&immediate--lw
-            when (opcode = "100011" and immediate(15)='1') else--need sign extend
+            when (opcode = "100011" and immediate(15)='1') else--sign extend
             "0000000000000000"&immediate--lw
-            when (opcode = "100011" and immediate(15)='0') else--need sign extend
+            when (opcode = "100011" and immediate(15)='0') else--sign extend
             registers(to_integer(unsigned(Rt)))-- sw
             when (opcode = "101011"  and Rt /= "00000") else
             registers(to_integer(unsigned(Rt)))-- beq
-            when (opcode = "000100"  and Rt /= "00000") else------------------------
+            when (opcode = "000100"  and Rt /= "00000") else
             registers(to_integer(unsigned(Rt)))-- bne
             when (opcode = "000101"  and Rt /= "00000")else
             "00000000000000000000000000000000";-- for the cases that access register 0, just return 0s
@@ -235,9 +236,9 @@ ALU_op <=   "00000"-- add 0
             "01010"--xor 10
             when (opcode = "000000" and funct = "100110") else
             "01110"-- move from HI 14
-            when (opcode = "000000" and funct = "010000") else--10
+            when (opcode = "000000" and funct = "010000") else
             "01111"--move from lO 15
-            when (opcode = "000000" and funct = "010010") else--11
+            when (opcode = "000000" and funct = "010010") else
             "10001"-- shift left logical 17
             when (opcode = "000000" and funct = "000000") else
             "10010"--shift right logical 18
@@ -245,11 +246,11 @@ ALU_op <=   "00000"-- add 0
             "10011"-- shift right arithmetic 19
             when (opcode = "000000" and funct = "000011") else
             "11001"-- jump register 25
-            when (opcode = "000000" and funct = "001000") else---- last R type
+            when (opcode = "000000" and funct = "001000") else
             "11000"-- jump 24
             when (opcode = "000010" ) else
             "11010"-- jump and link 26
-            when (opcode = "000011" ) else------ last J type
+            when (opcode = "000011" ) else
             "00010"-- addi 2
             when (opcode = "001000") else
             "00110"--slti 6
@@ -271,7 +272,7 @@ ALU_op <=   "00000"-- add 0
             "10111"-- bne 23
             when (opcode = "000101" );
 
--- write back flag
+-- write back flag (1 = need to write back, 0 = no need to write back)
 IDEX_WB <=  '1' -- add
             when (opcode = "000000" and funct = "100000") else
             '1'-- subtract
@@ -291,9 +292,9 @@ IDEX_WB <=  '1' -- add
             '1'--xor
             when (opcode = "000000" and funct = "100110") else
             '0'-- move from HI
-            when (opcode = "000000" and funct = "010000") else--10
+            when (opcode = "000000" and funct = "010000") else
             '0'--move from lO
-            when (opcode = "000000" and funct = "010010") else--11
+            when (opcode = "000000" and funct = "010010") else
             '1'-- shift left logical
             when (opcode = "000000" and funct = "000000") else
             '1'--shift right logical
@@ -301,15 +302,15 @@ IDEX_WB <=  '1' -- add
             '1'-- shift right arithmetic
             when (opcode = "000000" and funct = "000011") else
             '0'-- jump register
-            when (opcode = "000000" and funct = "001000") else---- last R type
+            when (opcode = "000000" and funct = "001000") else
             '0'-- jump
             when (opcode = "000010" ) else
             '0'-- jump and link
-            when (opcode = "000011" ) else------ last J type
+            when (opcode = "000011" ) else
             '1'-- addi
-            when (opcode = "001000") else--sign extend
+            when (opcode = "001000") else
             '1'--slti
-            when (opcode = "001010") else--need sign extend
+            when (opcode = "001010") else
             '1'--andi
             when (opcode = "001100" ) else
             '1'--ori
@@ -319,15 +320,15 @@ IDEX_WB <=  '1' -- add
             '1'--lui
             when (opcode = "001111" ) else
             '1'--lw
-            when (opcode = "100011") else--need sign extend
+            when (opcode = "100011") else
             '0'-- sw
             when (opcode = "101011" ) else
             '0'-- beq 22
-            when (opcode = "000100" ) else------------------------
+            when (opcode = "000100" ) else
             '0'-- bne
             when (opcode = "000101" );
 
--- memory access flag, 1 for load and store
+-- memory access flag, 1 for load and store (need to access memory), 0 for others
 IDEX_M <=   '1' --lw
             when (opcode = "100011") else
             '1' --sw
@@ -336,20 +337,20 @@ IDEX_M <=   '1' --lw
 
 -- execution stage flag, to know if execution stage need to implement any thing
 IDEX_EX <=  '0' -- move from HI
-            when (opcode = "000000" and funct = "010000") else--10
+            when (opcode = "000000" and funct = "010000") else
             '0' -- move from LO
-            when (opcode = "000000" and funct = "010010") else--11
+            when (opcode = "000000" and funct = "010010") else
             '1';
 
--- sign extend (extend from 16 bits to 32 bits)
+-- address sign extend (extend from 16 bits to 32 bits)
 SIGN_EXTEND <=  "1111111111111111"&immediate --sw
                 when (opcode = "101011" and immediate(15) = '1') else
                 "0000000000000000"&immediate
                 when (opcode = "101011" and immediate(15) = '0') else
                 "1111111111111111"&immediate
-                when (opcode = "000100" and immediate(15) = '1') else------------------------
+                when (opcode = "000100" and immediate(15) = '1') else
                 "0000000000000000"&immediate --beq
-                when (opcode = "000100" and immediate(15) = '0') else------------------------
+                when (opcode = "000100" and immediate(15) = '0') else
                 "1111111111111111"&immediate
                 when (opcode = "000101" and immediate(15) = '1')else
                 "0000000000000000"&immediate --bne
@@ -357,6 +358,7 @@ SIGN_EXTEND <=  "1111111111111111"&immediate --sw
                 "00000000000000000000000000000000";
 
 -- determine which register to write back, and forward to the next stage (execution)
+-- the write back register is determined according to the green sheet
 IDEX_WB_register <= Rd -- add
             when (opcode = "000000" and funct = "100000") else
             Rd -- subtract
@@ -376,9 +378,9 @@ IDEX_WB_register <= Rd -- add
             Rd --xor
             when (opcode = "000000" and funct = "100110") else
             "00000" -- move from HI
-            when (opcode = "000000" and funct = "010000") else--10
+            when (opcode = "000000" and funct = "010000") else
             "00000" --move from lO
-            when (opcode = "000000" and funct = "010010") else--11
+            when (opcode = "000000" and funct = "010010") else
             Rd -- shift left logical
             when (opcode = "000000" and funct = "000000") else
             Rd --shift right logical
@@ -386,15 +388,15 @@ IDEX_WB_register <= Rd -- add
             Rd -- shift right arithmetic
             when (opcode = "000000" and funct = "000011") else
             "00000" -- jump register
-            when (opcode = "000000" and funct = "001000") else---- last R type
+            when (opcode = "000000" and funct = "001000") else
             "00000" -- jump
             when (opcode = "000010" ) else
             "00000" -- jump and link
-            when (opcode = "000011" ) else------ last J type
+            when (opcode = "000011" ) else
             Rt -- addi
-            when (opcode = "001000") else--sign extend
+            when (opcode = "001000") else
             Rt --slti
-            when (opcode = "001010") else--need sign extend
+            when (opcode = "001010") else
             Rt --andi
             when (opcode = "001100" ) else
             Rt --ori
@@ -404,15 +406,16 @@ IDEX_WB_register <= Rd -- add
             Rt --lui
             when (opcode = "001111" ) else
             Rt --lw
-            when (opcode = "100011") else--need sign extend
+            when (opcode = "100011") else
             "00000" -- sw
             when (opcode = "101011" ) else
             "00000" -- beq
-            when (opcode = "000100" ) else------------------------
+            when (opcode = "000100" ) else
             "00000" -- bne
             when (opcode = "000101" );
 
--- forward Rs register to execution, to check for forwarding
+-- forward used Rs register to execution, to check for forwarding
+-- if Rs is not used, forward the R0 register
 IDEXRs_forwarding <= Rs -- add
             when (opcode = "000000" and funct = "100000") else
             Rs -- subtract
@@ -432,9 +435,9 @@ IDEXRs_forwarding <= Rs -- add
             Rs --xor
             when (opcode = "000000" and funct = "100110") else
             "00000" -- move from HI
-            when (opcode = "000000" and funct = "010000") else--10
+            when (opcode = "000000" and funct = "010000") else
             "00000" --move from lO
-            when (opcode = "000000" and funct = "010010") else--11
+            when (opcode = "000000" and funct = "010010") else
             "00000" -- shift left logical
             when (opcode = "000000" and funct = "000000") else
             "00000" --shift right logical
@@ -442,11 +445,11 @@ IDEXRs_forwarding <= Rs -- add
             "00000" -- shift right arithmetic
             when (opcode = "000000" and funct = "000011") else
             Rs -- jump register
-            when (opcode = "000000" and funct = "001000") else---- last R type
+            when (opcode = "000000" and funct = "001000") else
             "00000" -- jump
             when (opcode = "000010" ) else
             "00000" -- jump and link
-            when (opcode = "000011" ) else------ last J type
+            when (opcode = "000011" ) else
             Rs -- addi
             when (opcode = "001000" ) else
             Rs --slti
@@ -464,11 +467,12 @@ IDEXRs_forwarding <= Rs -- add
             Rs -- sw
             when (opcode = "101011" ) else
             Rs -- beq
-            when (opcode = "000100" ) else------------------------
+            when (opcode = "000100" ) else
             Rs -- bne
             when (opcode = "000101" );
 
 -- forward Rt register to execution, to check for forwarding
+-- if Rt is not used, forward R0 register to the next stage
 IDEXRt_forwarding <= Rt -- add
             when (opcode = "000000" and funct = "100000") else
             Rt -- subtract
@@ -488,9 +492,9 @@ IDEXRt_forwarding <= Rt -- add
             Rt --xor
             when (opcode = "000000" and funct = "100110") else
             "00000" -- move from HI
-            when (opcode = "000000" and funct = "010000") else--10
+            when (opcode = "000000" and funct = "010000") else
             "00000" --move from lO
-            when (opcode = "000000" and funct = "010010") else--11
+            when (opcode = "000000" and funct = "010010") else
             Rt -- shift left logical
             when (opcode = "000000" and funct = "000000") else
             Rt --shift right logical
@@ -498,19 +502,19 @@ IDEXRt_forwarding <= Rt -- add
             Rt -- shift right arithmetic
             when (opcode = "000000" and funct = "000011") else
             "00000" -- jump register
-            when (opcode = "000000" and funct = "001000") else---- last R type
+            when (opcode = "000000" and funct = "001000") else
             "00000" -- jump
             when (opcode = "000010" ) else
             "00000" -- jump and link
-            when (opcode = "000011" ) else------ last J type
+            when (opcode = "000011" ) else
             "00000" -- addi
-            when (opcode = "001000" and immediate(15)='1') else--sign extend
+            when (opcode = "001000" and immediate(15)='1') else
             "00000" --addi
-            when (opcode = "001000" and immediate(15)='0') else--sign extend
+            when (opcode = "001000" and immediate(15)='0') else
             "00000"--slti
-            when (opcode = "001010" and immediate(15)='1') else--need sign extend
+            when (opcode = "001010" and immediate(15)='1') else
             "00000"--slti
-            when (opcode = "001010" and immediate(15)='0') else--need sign extend
+            when (opcode = "001010" and immediate(15)='0') else
             "00000"--andi
             when (opcode = "001100" ) else
             "00000"--ori
@@ -520,9 +524,9 @@ IDEXRt_forwarding <= Rt -- add
             "00000"--lui
             when (opcode = "001111" ) else
             "00000"--lw
-            when (opcode = "100011" and immediate(15)='1') else--need sign extend
+            when (opcode = "100011" and immediate(15)='1') else
             "00000"--lw
-            when (opcode = "100011" and immediate(15)='0') else--need sign extend
+            when (opcode = "100011" and immediate(15)='0') else
             Rt --sw
             when (opcode = "101011" ) else
             Rt --beq
@@ -530,6 +534,7 @@ IDEXRt_forwarding <= Rt -- add
             Rt --bne
             when (opcode = "000101" );
 
+-- update HI and LO registers
 HI_reg <= HI_data;
 LO_reg <= LO_data;
 
@@ -541,9 +546,9 @@ BEGIN
     else
       registers(0) <= "00000000000000000000000000000000";
     end if;
-    if(opcode = "000000" and funct = "010000" and Rd /= "00000") then   -- load from high and register is not R0
+    if(opcode = "000000" and funct = "010000" and Rd /= "00000") then   -- load from high when register is not R0
       registers(to_integer(unsigned(Rd))) <= HI_data;
-    elsif(opcode = "000000" and funct = "010010" and Rd /= "00000") then  -- load from low and register is not R0
+    elsif(opcode = "000000" and funct = "010010" and Rd /= "00000") then  -- load from low when register is not R0
       registers(to_integer(unsigned(Rd))) <= LO_data;
     end if;
     if (opcode = "000011") then       -- jump and link, update R31
@@ -551,7 +556,7 @@ BEGIN
     end if;
 end process;
 
--- write register value to external file
+-- write register values to external file
 process(clk)
 file write_data_register : text;
 variable row: line;
