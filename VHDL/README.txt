@@ -26,7 +26,8 @@ Instruction_Memory_tb.vhd
 01-instrmem-TCL.tcl     
 02-fetchinstr-TCL.tcl   
 03-decode-TCL.tcl       
-04-execution-TCL.tcl    
+04-execution-TCL.tcl  
+05-data_men.tcl  
 
 3. Before running any programs, please copy the generated binary code for instructions into file "program.txt".
 
