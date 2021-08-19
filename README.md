@@ -160,3 +160,18 @@ There has already been a working **cache** implementation. Please check [here](h
 
 ## License
 Course content by [Prof.A Emad](http://www.ece.mcgill.ca/~aemad2/) at McGill University  
+
+
+## Reference
+[1] J. Brown, Designing a Pipelined CPU. San Diego, 2006,
+p. 5. [Online]. Available: https://cseweb.ucsd.edu/
+classes/su06/cse141/slides/s09-pipeline-1up.pdf.
+
+[2] P. Argade, Computer Architecture Summer Session I. San
+Diego, 2004, p. 13 ,21. [Online]. Available: http://cseweb.
+ucsd.edu/classes/su04/cse141/su04_09.pdf.
+
+[3] K. Hartman, "Encoding MIPS Instructions with C++17",
+Medium, 2020. [Online]. Available:
+https://medium.com/@kevin_hartman/encoding-mipsinstructions-
+with-c-17-59f9c2170faa.
