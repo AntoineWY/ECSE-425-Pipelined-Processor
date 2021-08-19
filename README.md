@@ -10,7 +10,8 @@ The
 processor stages include instruction fetch (IF), instruction
 decode (ID), instruction execution (EX), memory access
 (MEM) and writeback (WB).
-PIC-1@@
+
+![Pipelined Processor](https://github.com/AntoineWY/ECSE-425-Pipelined-Processor/blob/main/Diagrams/pipelinedCPU.PNG)
 
 The inputs of the CPU are the machine codes compiled from
 the provided assembler, which are 32-bit binary codes. In this
@@ -61,7 +62,14 @@ function will be implemented in this file. Furthermore, there
 will be several debug output signals and register signals added
 to the pipelined CPU, so that we can inspect internal signals
 between the connections of different stages. Diagrams below illustrates how different stages are connected.
-PIC2, PIC3@@
+
+Pipelined Processor Datapath illustration:
+
+![Pipelined Processor Datapath](https://github.com/AntoineWY/ECSE-425-Pipelined-Processor/blob/main/Diagrams/pipelinedDatapath.PNG)
+
+Hazard detection and forwarding illustration:
+
+![Hazard detection and forwarding](https://github.com/AntoineWY/ECSE-425-Pipelined-Processor/blob/main/Diagrams/PipelinedDPwithhazardandforward.PNG)
 
 
 ## Usage
@@ -131,6 +139,8 @@ simple loop doing 4 iterations of fibonacci calculation. Figure below captured b
 program registers are updated with the correct value, with R2
 being the actual fibonacci number in every iteration. 
 
+![result1](https://github.com/AntoineWY/ECSE-425-Pipelined-Processor/blob/main/Diagrams/resultBenchmark2-registervalue.PNG)
+
 Besides seeing the correct output, we also analyzed the
 critical part of the code and were curious to find out how the
 wave diagram revealed the behavior around those instructions.
@@ -139,6 +149,9 @@ loop, where the arithmetics of address calculation (multiply
 and add) are followed by a store and a “BNE”. After
 examining the wave below, we conclude that the behavior of
 our processor matches the theoretical flow, with correct number of stalls added into the pipeline for the program to determine the branch target. Please check the diagram below at the yellow line.
+
+
+![result2](https://github.com/AntoineWY/ECSE-425-Pipelined-Processor/blob/main/Diagrams/resultbenchmark2-branchbehavior.PNG)
 
 ## Future
 The next stage of this pipelined processor is optimization on performance. Several ideas could be applied to this existing implementation such as cache and branch prediction. A massively modified structure with the reschedule of the instructions, like the Tomasulo algorithm, could also be an option,  but definitely requiring a bigger time budget.
